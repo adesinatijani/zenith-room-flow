@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMenuItems, MenuItem } from "@/hooks/useMenuItems";
 import { useRestaurantTables, RestaurantTable } from "@/hooks/useRestaurantTables";
 import { useOrders, Order } from "@/hooks/useOrders";
+import { useRoomsDB } from "@/hooks/useRoomsDB";
 import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import AddTableModal from "./AddTableModal";
 
@@ -37,16 +38,19 @@ interface OrderItem extends MenuItem {
 
 const RestaurantPOS = () => {
   const { getFoodAndBeverageItems } = useMenuItems();
-  const { tables, loading: tablesLoading, updateTableStatus } = useRestaurantTables();
-  const { orders, loading: ordersLoading, createOrder, addItemToOrder, updateItemQuantity, processPayment } = useOrders();
+  const { tables, loading: tablesLoading, updateTableStatus, deleteTable } = useRestaurantTables();
+  const { orders, loading: ordersLoading, createOrder, addItemToOrder, updateItemQuantity, processPayment, deleteOrder } = useOrders();
+  const { rooms, loading: roomsLoading } = useRoomsDB();
   const { settings, formatCurrency } = useGlobalSettings();
   const { toast } = useToast();
   
   const [activeCategory, setActiveCategory] = useState("");
   const [showTableView, setShowTableView] = useState(false);
+  const [showRoomView, setShowRoomView] = useState(false);
   const [showGuestTypeModal, setShowGuestTypeModal] = useState(false);
   const [showAddTableModal, setShowAddTableModal] = useState(false);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<string>("");
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [isAddingItem, setIsAddingItem] = useState(false);
@@ -163,12 +167,17 @@ const RestaurantPOS = () => {
       const newOrder = await createOrder(guestName, type, tableId, roomNumber);
       
       if (type === 'table' && tableId) {
-        await updateTableStatus(tableId, 'occupied');
+        // Only update table status to occupied if it's currently available
+        const table = tables.find(t => t.id === tableId);
+        if (table && table.status === 'available') {
+          await updateTableStatus(tableId, 'occupied');
+        }
       }
       
       setSelectedOrderId(newOrder.id);
       setShowGuestTypeModal(false);
       setShowTableView(false);
+      setShowRoomView(false);
       
       toast({
         title: "Order Created",
@@ -217,19 +226,30 @@ const RestaurantPOS = () => {
                 {tables.map((table) => (
                   <Card
                     key={table.id}
-                    className={`cursor-pointer transition-all hover:shadow-lg ${
+                    className={`cursor-pointer transition-all hover:shadow-lg relative ${
                       table.status === 'available' ? 'border-green-500 hover:bg-green-50' :
                       table.status === 'occupied' ? 'border-red-500 bg-red-50' :
                       table.status === 'reserved' ? 'border-yellow-500 bg-yellow-50' :
                       'border-gray-400 bg-gray-100'
                     }`}
                     onClick={() => {
-                      if (table.status === 'available') {
-                        setSelectedTable(table.id);
-                        setShowGuestTypeModal(true);
-                      }
+                      setSelectedTable(table.id);
+                      setShowGuestTypeModal(true);
                     }}
                   >
+                    <Button 
+                      size="sm" 
+                      variant="ghost"
+                      className="absolute top-1 right-1 h-6 w-6 p-0 hover:bg-red-100 z-10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete Table ${table.table_number}?`)) {
+                          deleteTable(table.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3 text-red-500" />
+                    </Button>
                     <CardContent className="p-4 text-center h-24 flex flex-col justify-center">
                       <h4 className="font-bold text-lg">Table {table.table_number}</h4>
                       <p className="text-sm text-gray-600">{table.seats} seats</p>
@@ -242,6 +262,53 @@ const RestaurantPOS = () => {
                         }`}
                       >
                         {table.status.toUpperCase()}
+                      </Badge>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Room Selection Modal */}
+      {showRoomView && (
+        <div className="absolute inset-0 bg-black/50 z-20 flex items-center justify-center">
+          <Card className="w-4/5 h-4/5 bg-white">
+            <div className="p-6 h-full flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold">Select Room</h3>
+                <Button variant="ghost" onClick={() => setShowRoomView(false)}>✕</Button>
+              </div>
+              
+              <div className="grid grid-cols-4 gap-4 flex-1 overflow-auto">
+                {rooms.map((room) => (
+                  <Card
+                    key={room.id}
+                    className={`cursor-pointer transition-all hover:shadow-lg ${
+                      room.status === 'available' ? 'border-green-500 hover:bg-green-50' :
+                      room.status === 'occupied' ? 'border-blue-500 hover:bg-blue-50' :
+                      room.status === 'maintenance' ? 'border-red-500 bg-red-50' :
+                      'border-gray-400 bg-gray-100'
+                    }`}
+                    onClick={() => {
+                      setSelectedRoom(room.id);
+                      setShowGuestTypeModal(true);
+                    }}
+                  >
+                    <CardContent className="p-4 text-center h-24 flex flex-col justify-center">
+                      <h4 className="font-bold text-lg">Room {room.room_number}</h4>
+                      <p className="text-sm text-gray-600">{room.room_type}</p>
+                      <Badge 
+                        className={`mt-1 ${
+                          room.status === 'available' ? 'bg-green-500' :
+                          room.status === 'occupied' ? 'bg-blue-500' :
+                          room.status === 'maintenance' ? 'bg-red-500' :
+                          'bg-gray-500'
+                        }`}
+                      >
+                        {room.status.toUpperCase()}
                       </Badge>
                     </CardContent>
                   </Card>
@@ -266,29 +333,44 @@ const RestaurantPOS = () => {
                 <Button
                   className="w-full h-16 flex items-center justify-center bg-blue-600 hover:bg-blue-700"
                   disabled={isCreatingOrder}
-                  onClick={() => {
-                    const roomNumber = prompt("Enter room number:");
-                    if (roomNumber) {
-                      createNewOrder('room', undefined, roomNumber);
-                    }
-                  }}
+                  onClick={() => setShowRoomView(true)}
                 >
                   <div className="text-center">
-                    <div className="font-bold">Charge to Room</div>
-                    <div className="text-xs">Hotel guest room charge</div>
+                    <div className="font-bold">Select Room</div>
+                    <div className="text-xs">Choose room from list</div>
                   </div>
                 </Button>
                 
-                <Button
-                  className="w-full h-16 flex items-center justify-center bg-green-600 hover:bg-green-700"
-                  disabled={isCreatingOrder}
-                  onClick={() => createNewOrder('table', selectedTable || undefined)}
-                >
-                  <div className="text-center">
-                    <div className="font-bold">Charge to Table</div>
-                    <div className="text-xs">Restaurant table service</div>
-                  </div>
-                </Button>
+                {selectedRoom && (
+                  <Button
+                    className="w-full h-16 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700"
+                    disabled={isCreatingOrder}
+                    onClick={() => {
+                      const room = rooms.find(r => r.id === selectedRoom);
+                      if (room) {
+                        createNewOrder('room', undefined, room.room_number);
+                      }
+                    }}
+                  >
+                    <div className="text-center">
+                      <div className="font-bold">Charge to Room {rooms.find(r => r.id === selectedRoom)?.room_number}</div>
+                      <div className="text-xs">Hotel guest room charge</div>
+                    </div>
+                  </Button>
+                )}
+                
+                {selectedTable && (
+                  <Button
+                    className="w-full h-16 flex items-center justify-center bg-green-600 hover:bg-green-700"
+                    disabled={isCreatingOrder}
+                    onClick={() => createNewOrder('table', selectedTable || undefined)}
+                  >
+                    <div className="text-center">
+                      <div className="font-bold">Charge to Table {tables.find(t => t.id === selectedTable)?.table_number}</div>
+                      <div className="text-xs">Restaurant table service</div>
+                    </div>
+                  </Button>
+                )}
                 
                 <Button
                   className="w-full h-16 flex items-center justify-center bg-purple-600 hover:bg-purple-700"
@@ -360,11 +442,26 @@ const RestaurantPOS = () => {
                       </p>
                     </div>
                   </div>
-                  {order.order_items && order.order_items.length > 0 && (
-                    <Badge variant="secondary" className="text-xs">
-                      {order.order_items.length} items
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {order.order_items && order.order_items.length > 0 && (
+                      <Badge variant="secondary" className="text-xs">
+                        {order.order_items.length} items
+                      </Badge>
+                    )}
+                    <Button 
+                      size="sm" 
+                      variant="ghost"
+                      className="h-6 w-6 p-0 hover:bg-red-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete order for ${order.guest_name}?`)) {
+                          deleteOrder(order.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3 text-red-500" />
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Order Items */}

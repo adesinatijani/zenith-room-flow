@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Bell, User, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -12,10 +13,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useHotelSettings } from "@/hooks/useHotelSettings";
+import { UserProfileModal } from "@/components/profile/UserProfileModal";
+import { UserSettingsModal } from "@/components/settings/UserSettingsModal";
+import { SupportModal } from "@/components/support/SupportModal";
 
 export const Header = () => {
   const { profile, signOut } = useAuth();
   const { settings } = useHotelSettings();
+  const [showProfile, setShowProfile] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showSupport, setShowSupport] = useState(false);
 
   const handleLogout = async () => {
     await signOut();
@@ -85,12 +92,18 @@ export const Header = () => {
                 </span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-56 bg-background border z-50">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Support</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowProfile(true)}>
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowSettings(true)}>
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowSupport(true)}>
+                Support
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
                 Logout
@@ -99,6 +112,21 @@ export const Header = () => {
           </DropdownMenu>
         </div>
       </div>
+      
+      <UserProfileModal 
+        open={showProfile} 
+        onOpenChange={setShowProfile} 
+      />
+      
+      <UserSettingsModal 
+        open={showSettings} 
+        onOpenChange={setShowSettings} 
+      />
+      
+      <SupportModal 
+        open={showSupport} 
+        onOpenChange={setShowSupport} 
+      />
     </header>
   );
 };

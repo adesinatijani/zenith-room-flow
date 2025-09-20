@@ -1481,6 +1481,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_employee_data: {
+        Args: { emp_id: string }
+        Returns: boolean
+      }
+      can_access_employee_info: {
+        Args: { emp_id: string }
+        Returns: boolean
+      }
       can_access_employee_record: {
         Args: { emp_id: string }
         Returns: boolean
@@ -1492,6 +1500,34 @@ export type Database = {
       can_view_employee_sensitive_data: {
         Args: { employee_uuid: string }
         Returns: boolean
+      }
+      get_all_profiles_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          department: string
+          first_name: string
+          id: string
+          is_active: boolean
+          last_name: string
+          phone: string
+          role: string
+          updated_at: string
+        }[]
+      }
+      get_current_user_profile: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          department: string
+          first_name: string
+          id: string
+          is_active: boolean
+          last_name: string
+          phone: string
+          role: string
+          updated_at: string
+        }[]
       }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
@@ -1515,6 +1551,35 @@ export type Database = {
           used_leave_days: number
         }[]
       }
+      get_employee_data_for_user: {
+        Args: { emp_id: string }
+        Returns: {
+          address: string
+          bank_account: string
+          created_at: string
+          date_of_birth: string
+          department_id: string
+          email: string
+          emergency_contact_name: string
+          emergency_contact_phone: string
+          employee_id: string
+          employment_type: string
+          first_name: string
+          hire_date: string
+          id: string
+          last_name: string
+          manager_id: string
+          national_id: string
+          notes: string
+          phone: string
+          position_id: string
+          salary: number
+          status: string
+          total_leave_days: number
+          updated_at: string
+          used_leave_days: number
+        }[]
+      }
       get_employee_self_data: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -1534,6 +1599,30 @@ export type Database = {
           updated_at: string
           used_leave_days: number
         }[]
+      }
+      has_booking_access: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      has_financial_access: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      has_hotel_staff_access: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      has_hr_access: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      has_kitchen_access: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      has_management_access: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
       is_hr_admin: {
         Args: Record<PropertyKey, never>

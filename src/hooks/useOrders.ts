@@ -307,6 +307,42 @@ export const useOrders = () => {
     }
   };
 
+  const deleteOrder = async (orderId: string) => {
+    try {
+      // First delete all order items
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .delete()
+        .eq('order_id', orderId);
+
+      if (itemsError) throw itemsError;
+
+      // Then delete the order
+      const { error: orderError } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', orderId);
+
+      if (orderError) throw orderError;
+
+      // Remove from local state
+      setOrders(prev => prev.filter(order => order.id !== orderId));
+      
+      toast({
+        title: "Success",
+        description: "Order deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete order",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   const sendKitchenOrder = async (orderId: string) => {
     try {
       const order = orders.find(o => o.id === orderId);
@@ -474,6 +510,7 @@ export const useOrders = () => {
     addItemToOrder,
     updateItemQuantity,
     processPayment,
+    deleteOrder,
     refetch: fetchOrders
   };
 };

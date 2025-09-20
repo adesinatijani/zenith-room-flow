@@ -122,9 +122,10 @@ export const DocumentationGenerator: React.FC<DocumentationProps> = ({ onClose }
 
     } catch (error) {
       console.error('Error generating documentation:', error);
+      console.error('Error details:', error instanceof Error ? error.message : String(error));
       toast({
         title: "Generation Failed",
-        description: "There was an error generating the documentation. Please try again.",
+        description: `There was an error generating the documentation: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`,
         variant: "destructive",
       });
     } finally {

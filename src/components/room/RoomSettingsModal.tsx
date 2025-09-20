@@ -7,6 +7,10 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { RoomCalendarModal } from "./RoomCalendarModal";
+import { Calendar, Trash2, AlertTriangle } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface Room {
   id: string;
@@ -28,13 +32,17 @@ interface RoomSettingsModalProps {
   onOpenChange: (open: boolean) => void;
   room: Room | null;
   onRoomUpdate: (room: Room) => void;
+  onRoomDelete?: (roomId: string) => void;
 }
 
-export const RoomSettingsModal = ({ open, onOpenChange, room, onRoomUpdate }: RoomSettingsModalProps) => {
+export const RoomSettingsModal = ({ open, onOpenChange, room, onRoomUpdate, onRoomDelete }: RoomSettingsModalProps) => {
   const [status, setStatus] = useState<Room["status"]>("ready");
   const [maintenanceNotes, setMaintenanceNotes] = useState("");
   const [isDoNotDisturb, setIsDoNotDisturb] = useState(false);
   const [isPriorityClean, setIsPriorityClean] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
     if (room) {
@@ -64,17 +72,27 @@ export const RoomSettingsModal = ({ open, onOpenChange, room, onRoomUpdate }: Ro
     onOpenChange(false);
   };
 
+  const handleDelete = () => {
+    if (!room || !onRoomDelete) return;
+    
+    onRoomDelete(room.id);
+    toast.success(`Room ${room.number} deleted successfully`);
+    setShowDeleteAlert(false);
+    onOpenChange(false);
+  };
+
   if (!room) return null;
 
   const { formatCurrency } = useGlobalSettings();
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Room {room.number} Settings</DialogTitle>
-          <DialogDescription>Manage room status and maintenance settings</DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Room {room.number} Settings</DialogTitle>
+            <DialogDescription>Manage room status and maintenance settings</DialogDescription>
+          </DialogHeader>
         
         <div className="space-y-6">
           <div>
@@ -138,13 +156,64 @@ export const RoomSettingsModal = ({ open, onOpenChange, room, onRoomUpdate }: Ro
           </div>
         </div>
         
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave}>Save Changes</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter className="flex justify-between">
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowCalendar(true)}
+                className="flex items-center gap-2"
+              >
+                <Calendar className="h-4 w-4" />
+                View Calendar
+              </Button>
+              
+              {isAdmin && onRoomDelete && (
+                <Button 
+                  variant="destructive" 
+                  onClick={() => setShowDeleteAlert(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete Room
+                </Button>
+              )}
+            </div>
+            
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave}>Save Changes</Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <RoomCalendarModal 
+        open={showCalendar}
+        onOpenChange={setShowCalendar}
+        room={room}
+      />
+
+      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Delete Room {room?.number}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the room and remove all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete Room
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };

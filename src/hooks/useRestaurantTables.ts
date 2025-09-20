@@ -96,6 +96,32 @@ export const useRestaurantTables = () => {
     }
   };
 
+  const deleteTable = async (tableId: string) => {
+    try {
+      const { error } = await supabase
+        .from('restaurant_tables')
+        .delete()
+        .eq('id', tableId);
+
+      if (error) throw error;
+
+      setTables(prev => prev.filter(table => table.id !== tableId));
+      
+      toast({
+        title: "Success",
+        description: "Table deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting table:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete table",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   useEffect(() => {
     fetchTables();
 
@@ -133,6 +159,7 @@ export const useRestaurantTables = () => {
     loading,
     addTable,
     updateTableStatus,
+    deleteTable,
     refetch: fetchTables
   };
 };

@@ -248,6 +248,10 @@ const RoomManagement = () => {
     }
   };
 
+  const handleRoomDelete = (roomId: string) => {
+    setRooms(prev => prev.filter(room => room.id !== roomId));
+  };
+
   const handleBookingConfirm = (booking: any) => {
     // Update room status to occupied
     const room = rooms.find(r => r.id === booking.roomId);
@@ -470,6 +474,7 @@ const RoomManagement = () => {
         onOpenChange={setShowRoomSettings}
         room={selectedRoom}
         onRoomUpdate={handleRoomUpdate}
+        onRoomDelete={handleRoomDelete}
       />
 
       <RoomBookingModal
