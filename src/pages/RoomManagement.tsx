@@ -29,6 +29,7 @@ import { RoomBookingModal } from "@/components/room/RoomBookingModal";
 import { CheckInModal } from "@/components/room/CheckInModal";
 import { useGuests } from "@/hooks/useGuests";
 import { toast } from "sonner";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 
 interface Room {
   id: string;
@@ -46,6 +47,7 @@ interface Room {
 }
 
 const RoomManagement = () => {
+  const { formatCurrency } = useGlobalSettings();
   const [rooms, setRooms] = useState<Room[]>([
     { 
       id: "1", 
@@ -373,7 +375,7 @@ const RoomManagement = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Rate:</span>
-                  <span className="font-bold">${room.rate}/night</span>
+                  <span className="font-bold">{formatCurrency(room.rate)}/night</span>
                 </div>
                 
                 <div className="flex items-center justify-between">

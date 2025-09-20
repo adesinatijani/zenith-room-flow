@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Printer, Download, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useHotelSettings } from "@/hooks/useHotelSettings";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 
 interface Payment {
   id: string;
@@ -29,7 +29,7 @@ interface PrintReceiptModalProps {
 
 export const PrintReceiptModal = ({ isOpen, onClose, payment }: PrintReceiptModalProps) => {
   const { toast } = useToast();
-  const { settings } = useHotelSettings();
+  const { settings, formatCurrency } = useGlobalSettings();
 
   if (!payment) return null;
 
@@ -79,7 +79,7 @@ export const PrintReceiptModal = ({ isOpen, onClose, payment }: PrintReceiptModa
 
   const handleEmail = () => {
     const subject = `Payment Receipt - ${payment.transactionId}`;
-    const body = `Dear ${payment.guestName},\n\nThank you for your payment. Please find your receipt details below:\n\nTransaction ID: ${payment.transactionId}\nAmount: $${Math.abs(payment.amount).toFixed(2)}\nDate: ${payment.date}\nDescription: ${payment.description}\n\nBest regards,\nYour Hotel Team`;
+    const body = `Dear ${payment.guestName},\n\nThank you for your payment. Please find your receipt details below:\n\nTransaction ID: ${payment.transactionId}\nAmount: ${formatCurrency(Math.abs(payment.amount))}\nDate: ${payment.date}\nDescription: ${payment.description}\n\nBest regards,\nYour Hotel Team`;
     
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     
@@ -92,7 +92,6 @@ export const PrintReceiptModal = ({ isOpen, onClose, payment }: PrintReceiptModa
   const getReceiptHTML = () => {
     const tax = Math.abs(payment.amount) * (settings.tax_rate || 7.5) / 100;
     const subtotal = Math.abs(payment.amount) - tax;
-    const currencySymbol = settings.currency === 'USD' ? '$' : settings.currency;
 
     return `
       <!DOCTYPE html>
@@ -151,16 +150,16 @@ export const PrintReceiptModal = ({ isOpen, onClose, payment }: PrintReceiptModa
         
         <div class="row">
           <span>Subtotal:</span>
-          <span>${currencySymbol}${subtotal.toFixed(2)}</span>
+          <span>{formatCurrency(subtotal)}</span>
         </div>
         <div class="row">
           <span>Tax (${settings.tax_rate || 7.5}%):</span>
-          <span>${currencySymbol}${tax.toFixed(2)}</span>
+          <span>{formatCurrency(tax)}</span>
         </div>
         
         <div class="row total">
           <span>Total Amount:</span>
-          <span>${payment.amount < 0 ? '-' : ''}${currencySymbol}${Math.abs(payment.amount).toFixed(2)}</span>
+          <span>${payment.amount < 0 ? '-' : ''}{formatCurrency(Math.abs(payment.amount))}</span>
         </div>
         
         <div class="footer">
@@ -241,7 +240,7 @@ export const PrintReceiptModal = ({ isOpen, onClose, payment }: PrintReceiptModa
               
               <div className="flex justify-between text-lg font-bold">
                 <span>Total Amount:</span>
-                <span>{payment.amount < 0 ? '-' : ''}${Math.abs(payment.amount).toFixed(2)}</span>
+                <span>{payment.amount < 0 ? '-' : ''}{formatCurrency(Math.abs(payment.amount))}</span>
               </div>
               
               <div className="text-center mt-4 text-xs text-muted-foreground">

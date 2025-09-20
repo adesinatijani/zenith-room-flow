@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 
 interface Room {
   id: string;
@@ -64,6 +65,8 @@ export const RoomSettingsModal = ({ open, onOpenChange, room, onRoomUpdate }: Ro
   };
 
   if (!room) return null;
+
+  const { formatCurrency } = useGlobalSettings();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -129,7 +132,7 @@ export const RoomSettingsModal = ({ open, onOpenChange, room, onRoomUpdate }: Ro
             <div className="text-sm space-y-1">
               <p>Type: {room.type}</p>
               <p>Floor: {room.floor}</p>
-              <p>Rate: ${room.rate}/night</p>
+              <p>Rate: {formatCurrency(room.rate)}/night</p>
               {room.guest && <p>Current Guest: {room.guest}</p>}
             </div>
           </div>

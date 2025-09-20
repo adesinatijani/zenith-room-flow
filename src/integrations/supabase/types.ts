@@ -223,6 +223,47 @@ export type Database = {
           },
         ]
       }
+      employee_access_log: {
+        Row: {
+          access_time: string | null
+          access_type: string
+          accessed_by: string | null
+          accessed_fields: string[] | null
+          employee_id: string | null
+          id: string
+          ip_address: unknown | null
+          user_agent: string | null
+        }
+        Insert: {
+          access_time?: string | null
+          access_type: string
+          accessed_by?: string | null
+          accessed_fields?: string[] | null
+          employee_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+        }
+        Update: {
+          access_time?: string | null
+          access_type?: string
+          accessed_by?: string | null
+          accessed_fields?: string[] | null
+          employee_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_access_log_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_loans: {
         Row: {
           approved_at: string | null
@@ -967,6 +1008,45 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          department: string | null
+          first_name: string | null
+          id: string
+          is_active: boolean
+          last_name: string | null
+          phone: string | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          first_name?: string | null
+          id: string
+          is_active?: boolean
+          last_name?: string | null
+          phone?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          first_name?: string | null
+          id?: string
+          is_active?: boolean
+          last_name?: string | null
+          phone?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       restaurant_tables: {
         Row: {
           created_at: string
@@ -1401,9 +1481,71 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_employee_record: {
+        Args: { emp_id: string }
+        Returns: boolean
+      }
+      can_manage_employee: {
+        Args: { employee_uuid: string }
+        Returns: boolean
+      }
+      can_view_employee_sensitive_data: {
+        Args: { employee_uuid: string }
+        Returns: boolean
+      }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_employee_basic_info: {
+        Args: { emp_email?: string }
+        Returns: {
+          department_id: string
+          email: string
+          employee_id: string
+          employment_type: string
+          first_name: string
+          hire_date: string
+          id: string
+          last_name: string
+          phone: string
+          position_id: string
+          status: string
+          total_leave_days: number
+          used_leave_days: number
+        }[]
+      }
+      get_employee_self_data: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          department_id: string
+          email: string
+          employee_id: string
+          employment_type: string
+          first_name: string
+          hire_date: string
+          id: string
+          last_name: string
+          phone: string
+          position_id: string
+          status: string
+          total_leave_days: number
+          updated_at: string
+          used_leave_days: number
+        }[]
+      }
+      is_hr_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       update_inventory_quantity: {
         Args: { item_name_param: string; quantity_change: number }
         Returns: undefined
+      }
+      validate_password_strength: {
+        Args: { password: string }
+        Returns: boolean
       }
     }
     Enums: {

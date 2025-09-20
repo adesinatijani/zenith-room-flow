@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import { Settings, Plus, Trash2, Edit3 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ interface MenuSettingsModalProps {
 
 const MenuSettingsModal = ({ isOpen, onClose }: MenuSettingsModalProps) => {
   const { toast } = useToast();
+  const { settings: globalSettings } = useGlobalSettings();
   const [newCategory, setNewCategory] = useState("");
   const [newAllergen, setNewAllergen] = useState("");
   
@@ -37,8 +39,8 @@ const MenuSettingsModal = ({ isOpen, onClose }: MenuSettingsModalProps) => {
     showPreparationTime: true,
     allowCustomizations: true,
     requireAllergensInfo: false,
-    defaultTaxRate: 8.5,
-    currency: "USD",
+    defaultTaxRate: globalSettings.tax_rate || 7.5,
+    currency: globalSettings.currency || "USD",
     menuDescription: "Fresh, locally sourced ingredients prepared with passion"
   });
 
@@ -243,18 +245,20 @@ const MenuSettingsModal = ({ isOpen, onClose }: MenuSettingsModalProps) => {
             <Card>
               <CardHeader>
                 <CardTitle>Pricing Configuration</CardTitle>
-                <CardDescription>Configure tax rates and currency settings</CardDescription>
+                <CardDescription>Tax rate and currency are managed from global settings</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Default Tax Rate (%)</Label>
+                    <Label>Current Tax Rate (%)</Label>
                     <Input 
                       type="number" 
                       step="0.1"
-                      value={settings.defaultTaxRate}
-                      onChange={(e) => setSettings({...settings, defaultTaxRate: parseFloat(e.target.value) || 0})}
+                      value={globalSettings.tax_rate || 7.5}
+                      disabled
+                      className="bg-muted"
                     />
+                    <p className="text-xs text-muted-foreground">Configured in global settings</p>
                   </div>
                   <div className="space-y-2">
                     <Label>Currency</Label>

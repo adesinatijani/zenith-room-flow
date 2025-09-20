@@ -10,15 +10,24 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
+import { useHotelSettings } from "@/hooks/useHotelSettings";
 
 export const Header = () => {
+  const { profile, signOut } = useAuth();
+  const { settings } = useHotelSettings();
+
+  const handleLogout = async () => {
+    await signOut();
+  };
+
   return (
     <header className="h-16 border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-40">
       <div className="flex items-center justify-between h-full px-4">
         <div className="flex items-center gap-4">
           <SidebarTrigger className="p-2" />
           <div className="hidden md:block">
-            <h1 className="text-lg font-semibold text-foreground">Hotel Management System</h1>
+            <h1 className="text-lg font-semibold text-foreground">{settings.hotel_name} Management System</h1>
           </div>
         </div>
 
@@ -68,7 +77,12 @@ export const Header = () => {
                 <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
                   <User className="h-4 w-4 text-primary-foreground" />
                 </div>
-                <span className="hidden md:inline text-sm font-medium">Admin User</span>
+                <span className="hidden md:inline text-sm font-medium">
+                  {profile?.first_name && profile?.last_name 
+                    ? `${profile.first_name} ${profile.last_name}` 
+                    : profile?.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1) 
+                    : 'User'}
+                </span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -78,7 +92,9 @@ export const Header = () => {
               <DropdownMenuItem>Settings</DropdownMenuItem>
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">Logout</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
+                Logout
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

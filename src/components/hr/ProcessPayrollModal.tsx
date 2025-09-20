@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEmployees } from "@/hooks/useHR";
 import { useToast } from "@/hooks/use-toast";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import { DollarSign, Users, Calendar, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 
 interface ProcessPayrollModalProps {
@@ -19,13 +20,14 @@ interface ProcessPayrollModalProps {
 export const ProcessPayrollModal = ({ isOpen, onClose }: ProcessPayrollModalProps) => {
   const { toast } = useToast();
   const { data: employees = [] } = useEmployees();
+  const { settings, formatCurrency } = useGlobalSettings();
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [payrollSettings, setPayrollSettings] = useState({
     payPeriod: new Date().toISOString().slice(0, 7), // Current month
     overtimeRate: 25,
-    taxRate: 15,
+    taxRate: settings.tax_rate || 7.5,
     generatePayslips: true,
     sendEmailNotifications: true
   });

@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMenuItems, MenuItem } from "@/hooks/useMenuItems";
 import { useRestaurantTables, RestaurantTable } from "@/hooks/useRestaurantTables";
 import { useOrders, Order } from "@/hooks/useOrders";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import AddTableModal from "./AddTableModal";
 
 interface OrderItem extends MenuItem {
@@ -38,6 +39,7 @@ const RestaurantPOS = () => {
   const { getFoodAndBeverageItems } = useMenuItems();
   const { tables, loading: tablesLoading, updateTableStatus } = useRestaurantTables();
   const { orders, loading: ordersLoading, createOrder, addItemToOrder, updateItemQuantity, processPayment } = useOrders();
+  const { settings, formatCurrency } = useGlobalSettings();
   const { toast } = useToast();
   
   const [activeCategory, setActiveCategory] = useState("");
@@ -375,7 +377,7 @@ const RestaurantPOS = () => {
                           <span className="text-gray-700">{item.item_name}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                          <span className="font-medium">{formatCurrency(item.price * item.quantity)}</span>
                           <Button 
                             size="sm" 
                             variant="ghost"
@@ -397,15 +399,15 @@ const RestaurantPOS = () => {
                   <div className="mt-3 pt-2 border-t">
                     <div className="flex justify-between items-center text-sm font-bold">
                       <span>Subtotal:</span>
-                      <span>${order.subtotal?.toFixed(2)}</span>
+                      <span>{formatCurrency(order.subtotal || 0)}</span>
                     </div>
                     <div className="flex justify-between items-center text-xs text-gray-500">
                       <span>Tax:</span>
-                      <span>${order.tax_amount?.toFixed(2)}</span>
+                      <span>{formatCurrency(order.tax_amount || 0)}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm font-bold border-t pt-1 mt-1">
                       <span>Total:</span>
-                      <span>${order.total_amount?.toFixed(2)}</span>
+                      <span>{formatCurrency(order.total_amount || 0)}</span>
                     </div>
                   </div>
                 )}
@@ -493,7 +495,7 @@ const RestaurantPOS = () => {
                           <CardContent className="p-4 text-center">
                             <h4 className="font-bold text-sm mb-2">{item.name}</h4>
                             <div className="text-lg font-bold text-green-600 mb-1">
-                              ${item.price.toFixed(2)}
+                              {formatCurrency(item.price)}
                             </div>
                             <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
                               <Clock className="h-3 w-3" />
@@ -517,15 +519,15 @@ const RestaurantPOS = () => {
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between items-center text-sm">
                   <span>Subtotal:</span>
-                  <span className="font-medium">${getSelectedOrderTotals().subtotal.toFixed(2)}</span>
+                  <span className="font-medium">{formatCurrency(getSelectedOrderTotals().subtotal)}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm text-gray-600">
-                  <span>Tax (8.5%):</span>
-                  <span>${getSelectedOrderTotals().tax.toFixed(2)}</span>
+                  <span>Tax ({settings.tax_rate || 7.5}%):</span>
+                  <span>{formatCurrency(getSelectedOrderTotals().tax)}</span>
                 </div>
                 <div className="flex justify-between items-center text-2xl font-bold border-t pt-2">
                   <span>Total:</span>
-                  <span>${getSelectedOrderTotals().total.toFixed(2)}</span>
+                  <span>{formatCurrency(getSelectedOrderTotals().total)}</span>
                 </div>
               </div>
             </>

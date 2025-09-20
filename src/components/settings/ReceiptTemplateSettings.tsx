@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Receipt, Eye, Save } from "lucide-react";
-import { useHotelSettings } from "@/hooks/useHotelSettings";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import { useToast } from "@/hooks/use-toast";
 
 interface ReceiptTemplate {
@@ -40,7 +40,7 @@ const defaultTemplate: ReceiptTemplate = {
 };
 
 export const ReceiptTemplateSettings = () => {
-  const { settings } = useHotelSettings();
+  const { settings, formatCurrency } = useGlobalSettings();
   const { toast } = useToast();
   const [template, setTemplate] = useState<ReceiptTemplate>(defaultTemplate);
   const [showPreview, setShowPreview] = useState(false);
@@ -134,7 +134,7 @@ export const ReceiptTemplateSettings = () => {
               <div class="item-row">
                 <div class="row">
                   <span>${item.quantity}x ${item.name}</span>
-                  <span>${settings.currency === 'USD' ? '$' : settings.currency}${(item.price * item.quantity).toFixed(2)}</span>
+                  <span>{formatCurrency(item.price * item.quantity)}</span>
                 </div>
               </div>
             `).join('')}
@@ -142,9 +142,9 @@ export const ReceiptTemplateSettings = () => {
         ` : ''}
         
         <div class="total-section">
-          <div class="row"><span>Subtotal:</span><span>${settings.currency === 'USD' ? '$' : settings.currency}${subtotal.toFixed(2)}</span></div>
-          ${template.showTaxBreakdown ? `<div class="row"><span>Tax (${settings.tax_rate}%):</span><span>${settings.currency === 'USD' ? '$' : settings.currency}${tax.toFixed(2)}</span></div>` : ''}
-          <div class="row total"><span>Total:</span><span>${settings.currency === 'USD' ? '$' : settings.currency}${total.toFixed(2)}</span></div>
+          <div class="row"><span>Subtotal:</span><span>{formatCurrency(subtotal)}</span></div>
+          ${template.showTaxBreakdown ? `<div class="row"><span>Tax (${settings.tax_rate}%):</span><span>{formatCurrency(tax)}</span></div>` : ''}
+          <div class="row total"><span>Total:</span><span>{formatCurrency(total)}</span></div>
         </div>
         
         <div class="footer">

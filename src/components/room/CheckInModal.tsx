@@ -9,6 +9,7 @@ import { CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { useGuests } from "@/hooks/useGuests";
 import { toast } from "sonner";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 
 interface Room {
   id: string;
@@ -26,6 +27,7 @@ interface CheckInModalProps {
 
 export const CheckInModal = ({ open, onOpenChange, room, onCheckInConfirm }: CheckInModalProps) => {
   const { guests } = useGuests();
+  const { formatCurrency } = useGlobalSettings();
   const [selectedGuest, setSelectedGuest] = useState("");
   const [checkInDate, setCheckInDate] = useState<Date | undefined>(new Date());
   const [checkOutDate, setCheckOutDate] = useState<Date | undefined>(new Date(Date.now() + 86400000)); // Tomorrow
@@ -77,7 +79,7 @@ export const CheckInModal = ({ open, onOpenChange, room, onCheckInConfirm }: Che
         <DialogHeader>
           <DialogTitle>Check-in to Room {room.number}</DialogTitle>
           <DialogDescription>
-            {room.type} - ${room.rate}/night
+            {room.type} - {formatCurrency(room.rate)}/night
           </DialogDescription>
         </DialogHeader>
         
@@ -147,7 +149,7 @@ export const CheckInModal = ({ open, onOpenChange, room, onCheckInConfirm }: Che
                 <p>Check-in: {format(checkInDate, "PPP")}</p>
                 <p>Check-out: {format(checkOutDate, "PPP")}</p>
                 <p>Duration: {Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24))} night(s)</p>
-                <p className="font-medium">Rate: ${room.rate}/night</p>
+                <p className="font-medium">Rate: {formatCurrency(room.rate)}/night</p>
               </div>
             </div>
           )}

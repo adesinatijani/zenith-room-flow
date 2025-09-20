@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 
 interface Room {
   id: string;
@@ -41,6 +42,7 @@ const availableAmenities = [
 ];
 
 export const EditRoomModal = ({ open, onOpenChange, room, onRoomUpdate }: EditRoomModalProps) => {
+  const { settings } = useGlobalSettings();
   const [formData, setFormData] = useState({
     number: "",
     type: "",
@@ -132,7 +134,7 @@ export const EditRoomModal = ({ open, onOpenChange, room, onRoomUpdate }: EditRo
             </div>
             
             <div>
-              <Label htmlFor="rate">Rate per Night ($)</Label>
+              <Label htmlFor="rate">Rate per Night ({settings.currency})</Label>
               <Input
                 id="rate"
                 type="number"
