@@ -119,13 +119,30 @@ export const useReports = () => {
     queryKey: ['operational-reports'],
     queryFn: async () => {
       try {
-        // Get employees data
-        const { data: employees, error: employeesError } = await supabase
-          .from('employees')
-          .select('*, departments(*), employee_positions(*)')
-          .order('created_at', { ascending: false });
+        // Get employees data using secure access function
+        const { data: employees, error: employeesError } = await supabase.rpc('get_employee_data_secure');
 
         if (employeesError) throw employeesError;
+
+        // Get additional department and position data for employees that have access
+        const employeesWithRelations = await Promise.all(
+          (employees || []).map(async (employee) => {
+            const [deptResult, posResult] = await Promise.all([
+              employee.department_id ? 
+                supabase.from('departments').select('*').eq('id', employee.department_id).single() :
+                Promise.resolve({ data: null }),
+              employee.position_id ?
+                supabase.from('employee_positions').select('*').eq('id', employee.position_id).single() :
+                Promise.resolve({ data: null })
+            ]);
+
+            return {
+              ...employee,
+              departments: deptResult.data,
+              employee_positions: posResult.data
+            };
+          })
+        );
 
         // Get inventory data
         const { data: inventory, error: inventoryError } = await supabase

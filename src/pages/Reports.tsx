@@ -160,7 +160,7 @@ const Reports = () => {
           name: "Housekeeping Efficiency", 
           description: "Room cleaning and maintenance metrics", 
           lastGenerated: savedReports?.find(r => r.report_type === 'housekeeping_efficiency')?.generated_at || null,
-          dataCount: operationalData?.employees?.filter(e => e.departments?.code === 'HK')?.length || 0
+          dataCount: operationalData?.employees?.length || 0
         },
         { 
           name: "Inventory Usage Report", 
@@ -172,7 +172,7 @@ const Reports = () => {
           name: "Maintenance Log Report", 
           description: "Equipment and facility maintenance tracking", 
           lastGenerated: savedReports?.find(r => r.report_type === 'maintenance_log_report')?.generated_at || null,
-          dataCount: operationalData?.employees?.filter(e => e.departments?.code === 'MT')?.length || 0
+          dataCount: operationalData?.employees?.length || 0
         },
       ]
     }

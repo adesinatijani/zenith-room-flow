@@ -97,22 +97,38 @@ export const useEmployees = () => {
   return useQuery({
     queryKey: ['employees'],
     queryFn: async () => {
-      console.log('Fetching employees...');
-      const { data, error } = await supabase
-        .from('employees')
-        .select(`
-          *,
-          departments!employees_department_id_fkey (name, code),
-          employee_positions (title)
-        `)
-        .order('first_name');
+      console.log('Fetching employees with secure access...');
+      
+      // Use secure function that properly masks sensitive data based on user permissions
+      const { data, error } = await supabase.rpc('get_employee_data_secure');
 
-      console.log('Employees query result:', { data, error });
+      console.log('Secure employees query result:', { data, error });
       if (error) {
-        console.error('Error fetching employees:', error);
+        console.error('Error fetching employees securely:', error);
         throw error;
       }
-      return data as Employee[];
+
+      // Transform data to include department and position info
+      const employeesWithRelations = await Promise.all(
+        (data || []).map(async (employee) => {
+          const [deptResult, posResult] = await Promise.all([
+            employee.department_id ? 
+              supabase.from('departments').select('name, code').eq('id', employee.department_id).single() :
+              Promise.resolve({ data: null }),
+            employee.position_id ?
+              supabase.from('employee_positions').select('title').eq('id', employee.position_id).single() :
+              Promise.resolve({ data: null })
+          ]);
+
+          return {
+            ...employee,
+            departments: deptResult.data,
+            employee_positions: posResult.data
+          };
+        })
+      );
+
+      return employeesWithRelations as Employee[];
     }
   });
 };
@@ -197,10 +213,10 @@ export const useHRSummary = () => {
   return useQuery({
     queryKey: ['hr-summary'],
     queryFn: async () => {
-      console.log('Fetching HR summary...');
-      const { data: employees, error: empError } = await supabase
-        .from('employees')
-        .select('status, salary');
+      console.log('Fetching HR summary with secure access...');
+      
+      // Use secure function for employee data access
+      const { data: employees, error: empError } = await supabase.rpc('get_employee_data_secure');
 
       console.log('HR Summary query result:', { employees, empError });
       if (empError) {
@@ -222,12 +238,16 @@ export const useHRSummary = () => {
 
       if (loanError) throw loanError;
 
-      const total = employees.length;
-      const active = employees.filter(e => e.status === 'active').length;
-      const onLeave = employees.filter(e => e.status === 'on-leave').length;
-      const pendingLeaves = leaves.length;
-      const activeLoans = loans.length;
-      const totalSalaries = employees.reduce((sum, e) => sum + (e.salary || 0), 0);
+      const total = employees?.length || 0;
+      const active = employees?.filter(e => e.status === 'active').length || 0;
+      const onLeave = employees?.filter(e => e.status === 'on-leave').length || 0;
+      const pendingLeaves = leaves?.length || 0;
+      const activeLoans = loans?.length || 0;
+      
+      // Only calculate total salary if user has financial access (salary will be null if masked)
+      const totalSalaries = employees?.reduce((sum, e) => {
+        return e.salary ? sum + Number(e.salary) : sum;
+      }, 0) || 0;
 
       return {
         total,

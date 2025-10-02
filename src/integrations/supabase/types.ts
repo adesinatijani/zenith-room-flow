@@ -218,6 +218,27 @@ export type Database = {
             foreignKeyName: "fk_departments_manager"
             columns: ["manager_id"]
             isOneToOne: false
+            referencedRelation: "employee_basic_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_departments_manager"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "employee_financial_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_departments_manager"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "employee_sensitive_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_departments_manager"
+            columns: ["manager_id"]
+            isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
@@ -255,6 +276,27 @@ export type Database = {
           user_agent?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "employee_access_log_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_basic_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_access_log_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_financial_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_access_log_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_sensitive_info"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "employee_access_log_employee_id_fkey"
             columns: ["employee_id"]
@@ -318,7 +360,49 @@ export type Database = {
             foreignKeyName: "employee_loans_approved_by_fkey"
             columns: ["approved_by"]
             isOneToOne: false
+            referencedRelation: "employee_basic_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_loans_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "employee_financial_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_loans_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "employee_sensitive_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_loans_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_loans_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_basic_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_loans_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_financial_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_loans_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_sensitive_info"
             referencedColumns: ["id"]
           },
           {
@@ -459,6 +543,27 @@ export type Database = {
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "employee_basic_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "employee_financial_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "employee_sensitive_info"
             referencedColumns: ["id"]
           },
           {
@@ -740,7 +845,49 @@ export type Database = {
             foreignKeyName: "leave_requests_approved_by_fkey"
             columns: ["approved_by"]
             isOneToOne: false
+            referencedRelation: "employee_basic_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "employee_financial_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "employee_sensitive_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_requests_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_basic_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_requests_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_financial_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_requests_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_sensitive_info"
             referencedColumns: ["id"]
           },
           {
@@ -915,7 +1062,49 @@ export type Database = {
             foreignKeyName: "payroll_records_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "employee_basic_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_records_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_financial_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_records_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_sensitive_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_records_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_records_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "employee_basic_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_records_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "employee_financial_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_records_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "employee_sensitive_info"
             referencedColumns: ["id"]
           },
           {
@@ -996,7 +1185,49 @@ export type Database = {
             foreignKeyName: "performance_reviews_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "employee_basic_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_reviews_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_financial_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_reviews_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_sensitive_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_reviews_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "employee_basic_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "employee_financial_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "employee_sensitive_info"
             referencedColumns: ["id"]
           },
           {
@@ -1226,7 +1457,49 @@ export type Database = {
             foreignKeyName: "staff_recognition_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "employee_basic_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_recognition_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_financial_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_recognition_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_sensitive_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_recognition_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_recognition_nominated_by_fkey"
+            columns: ["nominated_by"]
+            isOneToOne: false
+            referencedRelation: "employee_basic_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_recognition_nominated_by_fkey"
+            columns: ["nominated_by"]
+            isOneToOne: false
+            referencedRelation: "employee_financial_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_recognition_nominated_by_fkey"
+            columns: ["nominated_by"]
+            isOneToOne: false
+            referencedRelation: "employee_sensitive_info"
             referencedColumns: ["id"]
           },
           {
@@ -1478,18 +1751,281 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      employee_basic_info: {
+        Row: {
+          created_at: string | null
+          department_id: string | null
+          email: string | null
+          employee_id: string | null
+          employment_type: string | null
+          first_name: string | null
+          hire_date: string | null
+          id: string | null
+          last_name: string | null
+          phone: string | null
+          position_id: string | null
+          status: string | null
+          total_leave_days: number | null
+          updated_at: string | null
+          used_leave_days: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          department_id?: string | null
+          email?: string | null
+          employee_id?: string | null
+          employment_type?: string | null
+          first_name?: string | null
+          hire_date?: string | null
+          id?: string | null
+          last_name?: string | null
+          phone?: string | null
+          position_id?: string | null
+          status?: string | null
+          total_leave_days?: number | null
+          updated_at?: string | null
+          used_leave_days?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          department_id?: string | null
+          email?: string | null
+          employee_id?: string | null
+          employment_type?: string | null
+          first_name?: string | null
+          hire_date?: string | null
+          id?: string | null
+          last_name?: string | null
+          phone?: string | null
+          position_id?: string | null
+          status?: string | null
+          total_leave_days?: number | null
+          updated_at?: string | null
+          used_leave_days?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "employee_positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_financial_info: {
+        Row: {
+          bank_account: string | null
+          created_at: string | null
+          department_id: string | null
+          email: string | null
+          employee_id: string | null
+          first_name: string | null
+          id: string | null
+          last_name: string | null
+          position_id: string | null
+          salary: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          bank_account?: string | null
+          created_at?: string | null
+          department_id?: string | null
+          email?: string | null
+          employee_id?: string | null
+          first_name?: string | null
+          id?: string | null
+          last_name?: string | null
+          position_id?: string | null
+          salary?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          bank_account?: string | null
+          created_at?: string | null
+          department_id?: string | null
+          email?: string | null
+          employee_id?: string | null
+          first_name?: string | null
+          id?: string | null
+          last_name?: string | null
+          position_id?: string | null
+          salary?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "employee_positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_sensitive_info: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          date_of_birth: string | null
+          department_id: string | null
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          employee_id: string | null
+          employment_type: string | null
+          first_name: string | null
+          hire_date: string | null
+          id: string | null
+          last_name: string | null
+          manager_id: string | null
+          national_id: string | null
+          notes: string | null
+          phone: string | null
+          position_id: string | null
+          status: string | null
+          total_leave_days: number | null
+          updated_at: string | null
+          used_leave_days: number | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          department_id?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          employee_id?: string | null
+          employment_type?: string | null
+          first_name?: string | null
+          hire_date?: string | null
+          id?: string | null
+          last_name?: string | null
+          manager_id?: string | null
+          national_id?: string | null
+          notes?: string | null
+          phone?: string | null
+          position_id?: string | null
+          status?: string | null
+          total_leave_days?: number | null
+          updated_at?: string | null
+          used_leave_days?: number | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          department_id?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          employee_id?: string | null
+          employment_type?: string | null
+          first_name?: string | null
+          hire_date?: string | null
+          id?: string | null
+          last_name?: string | null
+          manager_id?: string | null
+          national_id?: string | null
+          notes?: string | null
+          phone?: string | null
+          position_id?: string | null
+          status?: string | null
+          total_leave_days?: number | null
+          updated_at?: string | null
+          used_leave_days?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "employee_basic_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "employee_financial_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "employee_sensitive_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "employee_positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      can_access_basic_employee_info: {
+        Args: { emp_id: string }
+        Returns: boolean
+      }
+      can_access_employee_basic_info_only: {
+        Args: { emp_id: string }
+        Returns: boolean
+      }
       can_access_employee_data: {
         Args: { emp_id: string }
         Returns: boolean
       }
-      can_access_employee_info: {
+      can_access_employee_financial_info_only: {
         Args: { emp_id: string }
         Returns: boolean
       }
       can_access_employee_record: {
+        Args: { emp_id: string }
+        Returns: boolean
+      }
+      can_access_employee_sensitive_info_only: {
+        Args: { emp_id: string }
+        Returns: boolean
+      }
+      can_access_financial_employee_info: {
+        Args: { emp_id: string }
+        Returns: boolean
+      }
+      can_access_sensitive_employee_info: {
         Args: { emp_id: string }
         Returns: boolean
       }
@@ -1501,7 +2037,7 @@ export type Database = {
         Args: { employee_uuid: string }
         Returns: boolean
       }
-      get_all_profiles_admin: {
+      get_accessible_profiles: {
         Args: Record<PropertyKey, never>
         Returns: {
           created_at: string
@@ -1551,8 +2087,41 @@ export type Database = {
           used_leave_days: number
         }[]
       }
+      get_employee_by_access_level: {
+        Args: { access_level?: string; emp_id: string }
+        Returns: Json
+      }
       get_employee_data_for_user: {
         Args: { emp_id: string }
+        Returns: {
+          address: string
+          bank_account: string
+          created_at: string
+          date_of_birth: string
+          department_id: string
+          email: string
+          emergency_contact_name: string
+          emergency_contact_phone: string
+          employee_id: string
+          employment_type: string
+          first_name: string
+          hire_date: string
+          id: string
+          last_name: string
+          manager_id: string
+          national_id: string
+          notes: string
+          phone: string
+          position_id: string
+          salary: number
+          status: string
+          total_leave_days: number
+          updated_at: string
+          used_leave_days: number
+        }[]
+      }
+      get_employee_data_secure: {
+        Args: { emp_id?: string }
         Returns: {
           address: string
           bank_account: string
@@ -1600,6 +2169,66 @@ export type Database = {
           used_leave_days: number
         }[]
       }
+      get_employee_sensitive_data: {
+        Args: { employee_uuid?: string }
+        Returns: {
+          address: string
+          created_at: string
+          date_of_birth: string
+          department_id: string
+          email: string
+          emergency_contact_name: string
+          emergency_contact_phone: string
+          employee_id: string
+          employment_type: string
+          first_name: string
+          hire_date: string
+          id: string
+          last_name: string
+          manager_id: string
+          national_id: string
+          notes: string
+          phone: string
+          position_id: string
+          status: string
+          total_leave_days: number
+          updated_at: string
+          used_leave_days: number
+        }[]
+      }
+      get_my_accessible_employees: {
+        Args: { access_level?: string }
+        Returns: Json
+      }
+      get_my_employee_data: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          address: string
+          bank_account: string
+          created_at: string
+          date_of_birth: string
+          department_id: string
+          email: string
+          emergency_contact_name: string
+          emergency_contact_phone: string
+          employee_id: string
+          employment_type: string
+          first_name: string
+          hire_date: string
+          id: string
+          last_name: string
+          manager_id: string
+          national_id: string
+          notes: string
+          phone: string
+          position_id: string
+          salary: number
+          status: string
+          total_leave_days: number
+          updated_at: string
+          used_leave_days: number
+        }[]
+      }
       has_booking_access: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -1628,11 +2257,19 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      log_profile_access: {
+        Args: { accessed_profile_id: string }
+        Returns: undefined
+      }
       update_inventory_quantity: {
         Args: { item_name_param: string; quantity_change: number }
         Returns: undefined
       }
       validate_password_strength: {
+        Args: { password: string }
+        Returns: boolean
+      }
+      validate_strong_password: {
         Args: { password: string }
         Returns: boolean
       }
