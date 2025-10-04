@@ -132,6 +132,74 @@ export const useRoomsDB = () => {
     return rooms.find(room => room.room_number === roomNumber);
   };
 
+  // Create a new room
+  const createRoom = async (roomData: {
+    room_number: string;
+    room_type: string;
+    rate: number;
+    floor_number?: number;
+    capacity?: number;
+    amenities?: string[];
+    description?: string;
+  }) => {
+    try {
+      const { data, error } = await supabase
+        .from('rooms')
+        .insert([{
+          ...roomData,
+          status: 'available'
+        }])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      await fetchRooms();
+      
+      toast({
+        title: "Success",
+        description: "Room added successfully",
+      });
+      
+      return data as Room;
+    } catch (error) {
+      console.error('Error creating room:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create room",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  // Update a room
+  const updateRoom = async (roomId: string, roomData: Partial<Room>) => {
+    try {
+      const { error } = await supabase
+        .from('rooms')
+        .update({ ...roomData, updated_at: new Date().toISOString() })
+        .eq('id', roomId);
+      
+      if (error) throw error;
+      
+      await fetchRooms();
+      
+      toast({
+        title: "Success",
+        description: "Room updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating room:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update room",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   // Update room status
   const updateRoomStatus = async (roomId: string, status: Room['status']) => {
     try {
@@ -153,6 +221,33 @@ export const useRoomsDB = () => {
         description: "Failed to update room status",
         variant: "destructive",
       });
+    }
+  };
+
+  // Delete a room
+  const deleteRoom = async (roomId: string) => {
+    try {
+      const { error } = await supabase
+        .from('rooms')
+        .delete()
+        .eq('id', roomId);
+      
+      if (error) throw error;
+      
+      await fetchRooms();
+      
+      toast({
+        title: "Success",
+        description: "Room deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting room:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete room",
+        variant: "destructive",
+      });
+      throw error;
     }
   };
 
@@ -195,6 +290,9 @@ export const useRoomsDB = () => {
     rooms,
     bookings,
     loading,
+    createRoom,
+    updateRoom,
+    deleteRoom,
     createRoomBooking,
     getAvailableRooms,
     getRoomByNumber,

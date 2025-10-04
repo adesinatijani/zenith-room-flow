@@ -30,8 +30,9 @@ import { CheckInModal } from "@/components/room/CheckInModal";
 import { useGuests } from "@/hooks/useGuests";
 import { toast } from "sonner";
 import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
+import { useRoomsDB } from "@/hooks/useRoomsDB";
 
-interface Room {
+interface FrontendRoom {
   id: string;
   number: string;
   type: "Standard Single" | "Standard Double" | "King Size" | "Queen Size" | "Twin Beds" | "Suite" | "Deluxe Single" | "Deluxe Double" | "Presidential Suite" | "Executive Room";
@@ -43,107 +44,31 @@ interface Room {
   amenities: string[];
   floor: number;
   bedType: string;
-  roomSize: number; // in square meters
+  roomSize: number;
 }
 
 const RoomManagement = () => {
   const { formatCurrency } = useGlobalSettings();
-  const [rooms, setRooms] = useState<Room[]>([
-    { 
-      id: "1", 
-      number: "101", 
-      type: "King Size", 
-      status: "occupied",
-      guest: "John Smith", 
-      checkIn: "2024-01-15", 
-      checkOut: "2024-01-17", 
-      rate: 150, 
-      amenities: ["WiFi", "Air Condition", "Television", "Reading Table & Chair", "Fan", "Solar Power"], 
-      floor: 1,
-      bedType: "King Size Bed",
-      roomSize: 35
-    },
-    { 
-      id: "2", 
-      number: "102", 
-      type: "Queen Size", 
-      status: "ready",
-      rate: 130, 
-      amenities: ["WiFi", "Air Condition", "Television", "Reading Table & Chair", "Mini Bar", "Solar Power"], 
-      floor: 1,
-      bedType: "Queen Size Bed",
-      roomSize: 32
-    },
-    { 
-      id: "3", 
-      number: "103", 
-      type: "Presidential Suite", 
-      status: "vacant-dirty", 
-      rate: 450, 
-      amenities: ["WiFi", "Air Condition", "Television", "Reading Table & Chair", "Fan", "Solar Power", "Balcony", "Kitchen", "Living Room"], 
-      floor: 1,
-      bedType: "King Size Bed + Sofa Bed",
-      roomSize: 85
-    },
-    { 
-      id: "4", 
-      number: "201", 
-      type: "Twin Beds", 
-      status: "occupied", 
-      guest: "Sarah Johnson", 
-      checkIn: "2024-01-14", 
-      checkOut: "2024-01-16", 
-      rate: 140, 
-      amenities: ["WiFi", "Air Condition", "Television", "Reading Table & Chair", "Fan", "Solar Power"], 
-      floor: 2,
-      bedType: "Two Single Beds",
-      roomSize: 38
-    },
-    { 
-      id: "5", 
-      number: "202", 
-      type: "Executive Room", 
-      status: "ready",
-      rate: 280, 
-      amenities: ["WiFi", "Air Condition", "Television", "Reading Table & Chair", "Fan", "Solar Power", "Work Desk", "Coffee Machine"], 
-      floor: 2,
-      bedType: "King Size Bed",
-      roomSize: 45
-    },
-    { 
-      id: "6", 
-      number: "203", 
-      type: "Standard Double", 
-      status: "under-repairs", 
-      rate: 110, 
-      amenities: ["WiFi", "Air Condition", "Television", "Reading Table & Chair", "Fan", "Solar Power"], 
-      floor: 2,
-      bedType: "Double Bed",
-      roomSize: 28
-    },
-    { 
-      id: "7", 
-      number: "301", 
-      type: "Suite", 
-      status: "ready",
-      rate: 320, 
-      amenities: ["WiFi", "Air Condition", "Television", "Reading Table & Chair", "Fan", "Solar Power", "Balcony", "Kitchenette"], 
-      floor: 3,
-      bedType: "King Size Bed",
-      roomSize: 55
-    },
-    { 
-      id: "8", 
-      number: "302", 
-      type: "Deluxe Double", 
-      status: "ready", 
-      rate: 180, 
-      amenities: ["WiFi", "Air Condition", "Television", "Reading Table & Chair", "Fan", "Solar Power", "Mini Fridge"], 
-      floor: 3,
-      bedType: "Double Bed",
-      roomSize: 40
-    },
-  ]);
+  const { rooms: dbRooms, bookings, loading, createRoom, updateRoom, deleteRoom, createRoomBooking } = useRoomsDB();
+  
+  // Map database rooms to frontend format
+  const rooms: FrontendRoom[] = dbRooms.map(room => {
+    const booking = bookings.find(b => b.room_id === room.id && b.booking_status === 'active');
+    return {
+      id: room.id,
+      number: room.room_number,
+      type: room.room_type as any,
+      status: room.status === 'available' ? 'ready' : room.status as any,
+      guest: booking?.guest_name,
+      checkIn: booking?.check_in_date,
+      checkOut: booking?.check_out_date,
+      rate: Number(room.rate),
+      amenities: room.amenities || [],
+      floor: room.floor_number || 1,
+      bedType: room.description || room.room_type,
+      roomSize: room.capacity || 30
+    };
+  });
 
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterFloor, setFilterFloor] = useState("all");
@@ -155,7 +80,7 @@ const RoomManagement = () => {
   const [showRoomSettings, setShowRoomSettings] = useState(false);
   const [showRoomBooking, setShowRoomBooking] = useState(false);
   const [showCheckIn, setShowCheckIn] = useState(false);
-  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<FrontendRoom | null>(null);
 
   const statusColors = {
     ready: "bg-green-500",
@@ -170,6 +95,10 @@ const RoomManagement = () => {
     "vacant-dirty": "Vacant Dirty", 
     "under-repairs": "Under Repairs"
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   const filteredRooms = rooms.filter(room => {
     const matchesStatus = filterStatus === "all" || room.status === filterStatus;
@@ -192,32 +121,47 @@ const RoomManagement = () => {
 
   const stats = getStatusStats();
 
-  const handleAddRoom = (newRoom: Room) => {
-    setRooms(prev => [...prev, newRoom]);
+  const handleAddRoom = async (newRoom: FrontendRoom) => {
+    await createRoom({
+      room_number: newRoom.number,
+      room_type: newRoom.type,
+      rate: newRoom.rate,
+      floor_number: newRoom.floor,
+      capacity: newRoom.roomSize,
+      amenities: newRoom.amenities,
+      description: newRoom.bedType
+    });
   };
 
-  const handleEditRoom = (room: Room) => {
+  const handleEditRoom = (room: FrontendRoom) => {
     setSelectedRoom(room);
     setShowEditRoom(true);
   };
 
-  const handleRoomSettings = (room: Room) => {
+  const handleRoomSettings = (room: FrontendRoom) => {
     setSelectedRoom(room);
     setShowRoomSettings(true);
   };
 
-  const handleBookRoom = (room: Room) => {
+  const handleBookRoom = (room: FrontendRoom) => {
     setSelectedRoom(room);
     setShowRoomBooking(true);
   };
 
-  const handleRoomUpdate = (updatedRoom: Room) => {
-    setRooms(prev => prev.map(room => 
-      room.id === updatedRoom.id ? updatedRoom : room
-    ));
+  const handleRoomUpdate = async (updatedRoom: FrontendRoom) => {
+    await updateRoom(updatedRoom.id, {
+      room_number: updatedRoom.number,
+      room_type: updatedRoom.type,
+      rate: updatedRoom.rate,
+      floor_number: updatedRoom.floor,
+      capacity: updatedRoom.roomSize,
+      amenities: updatedRoom.amenities,
+      description: updatedRoom.bedType,
+      status: updatedRoom.status === 'ready' ? 'available' : updatedRoom.status as any
+    });
   };
 
-  const handleCheckOut = (room: Room) => {
+  const handleCheckOut = async (room: FrontendRoom) => {
     const updatedRoom = {
       ...room,
       status: "vacant-dirty" as const,
@@ -225,46 +169,43 @@ const RoomManagement = () => {
       checkIn: undefined,
       checkOut: undefined
     };
-    handleRoomUpdate(updatedRoom);
+    await handleRoomUpdate(updatedRoom);
     toast.success(`${room.guest} checked out from Room ${room.number}`);
   };
 
-  const handleCheckIn = (room: Room) => {
+  const handleCheckIn = (room: FrontendRoom) => {
     setSelectedRoom(room);
     setShowCheckIn(true);
   };
 
-  const handleCheckInConfirm = (checkInData: any) => {
-    const room = rooms.find(r => r.id === checkInData.roomId);
-    if (room) {
-      const updatedRoom = {
-        ...room,
-        status: "occupied" as const,
-        guest: checkInData.guestName,
-        checkIn: checkInData.checkIn,
-        checkOut: checkInData.checkOut
-      };
-      handleRoomUpdate(updatedRoom);
-    }
+  const handleCheckInConfirm = async (checkInData: any) => {
+    await createRoomBooking({
+      room_id: checkInData.roomId,
+      guest_name: checkInData.guestName,
+      guest_phone: checkInData.guestPhone,
+      guest_email: checkInData.guestEmail,
+      check_out_date: checkInData.checkOut,
+      nights: checkInData.nights || 1,
+      total_amount: checkInData.totalAmount || 0,
+      special_requests: checkInData.specialRequests
+    });
   };
 
-  const handleRoomDelete = (roomId: string) => {
-    setRooms(prev => prev.filter(room => room.id !== roomId));
+  const handleRoomDelete = async (roomId: string) => {
+    await deleteRoom(roomId);
   };
 
-  const handleBookingConfirm = (booking: any) => {
-    // Update room status to occupied
-    const room = rooms.find(r => r.id === booking.roomId);
-    if (room) {
-      const updatedRoom = {
-        ...room,
-        status: "occupied" as const,
-        guest: booking.guestName,
-        checkIn: booking.checkIn,
-        checkOut: booking.checkOut
-      };
-      handleRoomUpdate(updatedRoom);
-    }
+  const handleBookingConfirm = async (booking: any) => {
+    await createRoomBooking({
+      room_id: booking.roomId,
+      guest_name: booking.guestName,
+      guest_phone: booking.guestPhone,
+      guest_email: booking.guestEmail,
+      check_out_date: booking.checkOut,
+      nights: booking.nights || 1,
+      total_amount: booking.totalAmount || 0,
+      special_requests: booking.specialRequests
+    });
   };
 
   return (
