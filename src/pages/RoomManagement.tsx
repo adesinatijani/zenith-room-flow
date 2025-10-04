@@ -54,11 +54,19 @@ const RoomManagement = () => {
   // Map database rooms to frontend format
   const rooms: FrontendRoom[] = dbRooms.map(room => {
     const booking = bookings.find(b => b.room_id === room.id && b.booking_status === 'active');
+    
+    // Map database status to frontend status
+    let frontendStatus: FrontendRoom['status'] = 'ready';
+    if (room.status === 'available') frontendStatus = 'ready';
+    else if (room.status === 'occupied') frontendStatus = 'occupied';
+    else if (room.status === 'cleaning') frontendStatus = 'vacant-dirty';
+    else if (room.status === 'maintenance') frontendStatus = 'under-repairs';
+    
     return {
       id: room.id,
       number: room.room_number,
       type: room.room_type as any,
-      status: room.status === 'available' ? 'ready' : room.status as any,
+      status: frontendStatus,
       guest: booking?.guest_name,
       checkIn: booking?.check_in_date,
       checkOut: booking?.check_out_date,

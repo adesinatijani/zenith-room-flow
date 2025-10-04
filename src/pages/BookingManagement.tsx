@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Calendar,
   Users,
@@ -19,6 +19,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useRoomsDB } from "@/hooks/useRoomsDB";
+import { useHalls } from "@/hooks/useHalls";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 
 interface RoomReservation {
   id: string;
@@ -59,95 +62,60 @@ interface OccupiedRoom {
 }
 
 const BookingManagement = () => {
-  const [roomReservations] = useState<RoomReservation[]>([
-    {
-      id: "1",
-      type: "room",
-      roomNumber: "101",
-      roomType: "King Size",
-      guestName: "John Smith",
-      checkIn: "2024-01-15",
-      checkOut: "2024-01-17",
-      guests: 2,
-      status: "checked-in",
-      totalAmount: 300,
-      specialRequests: "Late checkout"
-    },
-    {
-      id: "2",
-      type: "room",
-      roomNumber: "205",
-      roomType: "Executive Room",
-      guestName: "Sarah Wilson",
-      checkIn: "2024-01-20",
-      checkOut: "2024-01-22",
-      guests: 1,
-      status: "confirmed",
-      totalAmount: 560
-    },
-    {
-      id: "3",
-      type: "room",
-      roomNumber: "301",
-      roomType: "Suite",
-      guestName: "Michael Brown",
-      checkIn: "2024-01-18",
-      checkOut: "2024-01-21",
-      guests: 3,
-      status: "pending",
-      totalAmount: 960
-    }
-  ]);
+  const { formatCurrency } = useGlobalSettings();
+  const { rooms, bookings, loading } = useRoomsDB();
+  const { halls, bookings: hallBookingsData } = useHalls();
+  
+  // Map room bookings from database to frontend format
+  const roomReservations: RoomReservation[] = bookings.map(booking => {
+    const room = rooms.find(r => r.id === booking.room_id);
+    return {
+      id: booking.id,
+      type: "room" as const,
+      roomNumber: room?.room_number || "N/A",
+      roomType: room?.room_type || "Standard",
+      guestName: booking.guest_name,
+      checkIn: booking.check_in_date,
+      checkOut: booking.check_out_date,
+      guests: room?.capacity || 2,
+      status: booking.booking_status === 'active' ? 'checked-in' : 
+              booking.booking_status === 'completed' ? 'checked-out' : 
+              booking.booking_status === 'cancelled' ? 'cancelled' : 'confirmed',
+      totalAmount: Number(booking.total_amount),
+      specialRequests: booking.special_requests
+    };
+  });
 
-  const [hallReservations] = useState<HallReservation[]>([
-    {
-      id: "1",
-      type: "hall",
-      hallName: "Grand Ballroom",
-      event: "Wedding Reception",
-      organizer: "Smith Family",
-      date: "2024-01-20",
-      startTime: "18:00",
-      endTime: "23:00",
-      guests: 350,
-      status: "confirmed",
-      totalAmount: 1500
-    },
-    {
-      id: "2",
-      type: "hall",
-      hallName: "Conference Hall A",
-      event: "Corporate Meeting",
-      organizer: "Tech Corp Ltd",
-      date: "2024-01-18",
-      startTime: "09:00",
-      endTime: "17:00",
-      guests: 80,
-      status: "confirmed",
-      totalAmount: 1200
-    }
-  ]);
+  // Map hall bookings from database to frontend format
+  const hallReservations: HallReservation[] = hallBookingsData.map(booking => ({
+    id: booking.id,
+    type: "hall" as const,
+    hallName: booking.hallName,
+    event: booking.event,
+    organizer: booking.organizer,
+    date: booking.date,
+    startTime: booking.startTime,
+    endTime: booking.endTime,
+    guests: booking.guests,
+    status: booking.status,
+    totalAmount: booking.totalAmount
+  }));
 
-  const [occupiedRooms] = useState<OccupiedRoom[]>([
-    {
-      id: "1",
-      roomNumber: "101",
-      guestName: "John Smith",
-      checkIn: "2024-01-15",
-      checkOut: "2024-01-17",
-      guests: 2,
-      status: "occupied"
-    },
-    {
-      id: "2",
-      roomNumber: "201",
-      guestName: "Sarah Johnson",
-      checkIn: "2024-01-14",
-      checkOut: "2024-01-16",
-      guests: 2,
-      status: "occupied"
-    }
-  ]);
+  // Get currently occupied rooms from active bookings
+  const occupiedRooms: OccupiedRoom[] = bookings
+    .filter(booking => booking.booking_status === 'active')
+    .map(booking => {
+      const room = rooms.find(r => r.id === booking.room_id);
+      return {
+        id: booking.id,
+        roomNumber: room?.room_number || "N/A",
+        guestName: booking.guest_name,
+        checkIn: booking.check_in_date,
+        checkOut: booking.check_out_date,
+        guests: room?.capacity || 2,
+        status: "occupied" as const
+      };
+    });
 
   const [activeTab, setActiveTab] = useState("reservations");
   const [filterType, setFilterType] = useState("all");
@@ -190,6 +158,10 @@ const BookingManagement = () => {
   };
 
   const stats = getReservationStats();
+
+  if (loading) {
+    return <div className="p-6">Loading bookings...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -365,7 +337,7 @@ const BookingManagement = () => {
                     </div>
                     
                     <div className="text-right space-y-2">
-                      <div className="text-2xl font-bold">${reservation.totalAmount}</div>
+                      <div className="text-2xl font-bold">{formatCurrency(reservation.totalAmount)}</div>
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline">
                           <Edit className="h-4 w-4" />
