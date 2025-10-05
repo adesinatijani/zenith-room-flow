@@ -19,112 +19,60 @@ import { Separator } from "@/components/ui/separator";
 import AddRecipeModal from "@/components/recipe/AddRecipeModal";
 import EditRecipeModal from "@/components/recipe/EditRecipeModal";
 import DeleteRecipeModal from "@/components/recipe/DeleteRecipeModal";
-
-interface Recipe {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  prepTime: number;
-  cookTime: number;
-  servings: number;
-  cost: number;
-  difficulty: "Easy" | "Medium" | "Hard";
-  ingredients: { name: string; quantity: number; unit: string; cost: number }[];
-  instructions: string[];
-  image?: string;
-}
+import { useRecipesDB } from "@/hooks/useRecipesDB";
 
 const RecipeManagement = () => {
+  const { recipes, loading, addRecipe, updateRecipe, deleteRecipe } = useRecipesDB();
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [selectedRecipe, setSelectedRecipe] = useState<typeof recipes[0] | null>(null);
 
   const categories = [
     "Appetizers", "Main Course", "Desserts", "Beverages", "Salads", "Soups", "Sides"
   ];
 
-  // Initialize with mock data
-  useState(() => {
-    const mockRecipes: Recipe[] = [
-      {
-        id: "1",
-        name: "Grilled Salmon with Herbs",
-        description: "Fresh Atlantic salmon grilled to perfection with herb seasoning",
-        category: "Main Course",
-        prepTime: 15,
-        cookTime: 20,
-        servings: 4,
-        cost: 18.50,
-        difficulty: "Medium",
-        ingredients: [
-          { name: "Salmon Fillet", quantity: 4, unit: "pieces", cost: 12.00 },
-          { name: "Fresh Herbs", quantity: 2, unit: "tbsp", cost: 1.50 },
-          { name: "Olive Oil", quantity: 3, unit: "tbsp", cost: 1.00 },
-          { name: "Lemon", quantity: 1, unit: "piece", cost: 0.50 },
-          { name: "Salt & Pepper", quantity: 1, unit: "tsp", cost: 0.10 }
-        ],
-        instructions: [
-          "Preheat grill to medium-high heat",
-          "Season salmon with herbs, salt, and pepper",
-          "Brush with olive oil",
-          "Grill for 6-8 minutes per side",
-          "Serve with lemon wedges"
-        ]
-      },
-      {
-        id: "2",
-        name: "Caesar Salad",
-        description: "Classic Caesar salad with homemade dressing and croutons",
-        category: "Salads",
-        prepTime: 20,
-        cookTime: 0,
-        servings: 6,
-        cost: 8.75,
-        difficulty: "Easy",
-        ingredients: [
-          { name: "Romaine Lettuce", quantity: 2, unit: "heads", cost: 3.00 },
-          { name: "Parmesan Cheese", quantity: 100, unit: "g", cost: 2.50 },
-          { name: "Croutons", quantity: 1, unit: "cup", cost: 1.25 },
-          { name: "Caesar Dressing", quantity: 0.5, unit: "cup", cost: 2.00 }
-        ],
-        instructions: [
-          "Wash and chop romaine lettuce",
-          "Toss with Caesar dressing",
-          "Add croutons and parmesan",
-          "Serve immediately"
-        ]
-      }
-    ];
-    
-    setRecipes(mockRecipes);
-  });
-
   // Handler functions
-  const handleAddRecipe = (newRecipe: Recipe) => {
-    setRecipes(prev => [...prev, newRecipe]);
+  const handleAddRecipe = async (newRecipe: any) => {
+    try {
+      await addRecipe(newRecipe);
+      setIsAddDialogOpen(false);
+    } catch (error) {
+      console.error("Error adding recipe:", error);
+    }
   };
 
-  const handleEditRecipe = (updatedRecipe: Recipe) => {
-    setRecipes(prev => prev.map(recipe => 
-      recipe.id === updatedRecipe.id ? updatedRecipe : recipe
-    ));
+  const handleEditRecipe = async (recipeData: any) => {
+    if (selectedRecipe) {
+      try {
+        await updateRecipe(selectedRecipe.id, recipeData);
+        setIsEditDialogOpen(false);
+        setSelectedRecipe(null);
+      } catch (error) {
+        console.error("Error updating recipe:", error);
+      }
+    }
   };
 
-  const handleDeleteRecipe = (recipeId: string) => {
-    setRecipes(prev => prev.filter(recipe => recipe.id !== recipeId));
+  const handleDeleteRecipe = async (recipeId: string) => {
+    try {
+      await deleteRecipe(recipeId);
+      setIsDeleteDialogOpen(false);
+      setSelectedRecipe(null);
+    } catch (error) {
+      console.error("Error deleting recipe:", error);
+    }
   };
 
-  const openEditDialog = (recipe: Recipe) => {
+  const openEditDialog = (recipe: typeof recipes[0]) => {
     setSelectedRecipe(recipe);
     setIsEditDialogOpen(true);
   };
 
-  const openDeleteDialog = (recipe: Recipe) => {
+  const openDeleteDialog = (recipe: typeof recipes[0]) => {
     setSelectedRecipe(recipe);
     setIsDeleteDialogOpen(true);
   };
@@ -136,7 +84,7 @@ const RecipeManagement = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const RecipeCard = ({ recipe }: { recipe: Recipe }) => (
+  const RecipeCard = ({ recipe }: { recipe: typeof recipes[0] }) => (
     <Card className="card-luxury">
       <CardHeader>
         <div className="flex items-start justify-between">
@@ -164,7 +112,7 @@ const RecipeManagement = () => {
             </Badge>
             <Badge variant="outline">
               <Clock className="h-3 w-3 mr-1" />
-              {recipe.prepTime + recipe.cookTime}min
+              {recipe.prep_time + recipe.cook_time}min
             </Badge>
             <Badge variant="outline">
               <Users className="h-3 w-3 mr-1" />
@@ -177,10 +125,10 @@ const RecipeManagement = () => {
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="font-medium">Prep Time:</span> {recipe.prepTime}min
+              <span className="font-medium">Prep Time:</span> {recipe.prep_time}min
             </div>
             <div>
-              <span className="font-medium">Cook Time:</span> {recipe.cookTime}min
+              <span className="font-medium">Cook Time:</span> {recipe.cook_time}min
             </div>
           </div>
 

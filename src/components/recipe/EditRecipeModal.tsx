@@ -8,27 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface Recipe {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  prepTime: number;
-  cookTime: number;
-  servings: number;
-  cost: number;
-  difficulty: "Easy" | "Medium" | "Hard";
-  ingredients: { name: string; quantity: number; unit: string; cost: number }[];
-  instructions: string[];
-  image?: string;
-}
+import { Recipe } from "@/hooks/useRecipesDB";
 
 interface EditRecipeModalProps {
   isOpen: boolean;
   onClose: () => void;
   recipe: Recipe | null;
-  onSave: (recipe: Recipe) => void;
+  onSave: (recipe: Partial<Recipe>) => void;
 }
 
 const categories = [
@@ -37,18 +23,20 @@ const categories = [
 
 const EditRecipeModal = ({ isOpen, onClose, recipe, onSave }: EditRecipeModalProps) => {
   const { toast } = useToast();
-  const [formData, setFormData] = useState<Recipe>({
+  const [formData, setFormData] = useState<Partial<Recipe>>({
     id: "",
     name: "",
     description: "",
     category: "",
-    prepTime: 0,
-    cookTime: 0,
+    prep_time: 0,
+    cook_time: 0,
     servings: 0,
     cost: 0,
     difficulty: "Easy",
     ingredients: [],
-    instructions: [""]
+    instructions: [""],
+    created_at: "",
+    updated_at: ""
   });
 
   // Initialize form when recipe changes
@@ -182,16 +170,16 @@ const EditRecipeModal = ({ isOpen, onClose, recipe, onSave }: EditRecipeModalPro
                   <Label>Prep Time (min)</Label>
                   <Input 
                     type="number" 
-                    value={formData.prepTime}
-                    onChange={(e) => setFormData(prev => ({...prev, prepTime: parseInt(e.target.value) || 0}))}
+                    value={formData.prep_time || 0}
+                    onChange={(e) => setFormData(prev => ({...prev, prep_time: parseInt(e.target.value) || 0}))}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Cook Time (min)</Label>
                   <Input 
                     type="number" 
-                    value={formData.cookTime}
-                    onChange={(e) => setFormData(prev => ({...prev, cookTime: parseInt(e.target.value) || 0}))}
+                    value={formData.cook_time || 0}
+                    onChange={(e) => setFormData(prev => ({...prev, cook_time: parseInt(e.target.value) || 0}))}
                   />
                 </div>
                 <div className="space-y-2">

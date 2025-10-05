@@ -1,20 +1,6 @@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-
-interface Recipe {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  prepTime: number;
-  cookTime: number;
-  servings: number;
-  cost: number;
-  difficulty: "Easy" | "Medium" | "Hard";
-  ingredients: { name: string; quantity: number; unit: string; cost: number }[];
-  instructions: string[];
-  image?: string;
-}
+import { Recipe } from "@/hooks/useRecipesDB";
 
 interface DeleteRecipeModalProps {
   isOpen: boolean;

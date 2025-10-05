@@ -615,6 +615,355 @@ export type Database = {
         }
         Relationships: []
       }
+      guests: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          last_stay: string | null
+          loyalty_tier: string | null
+          name: string
+          nationality: string | null
+          notes: string | null
+          phone: string | null
+          preferences: string[] | null
+          status: string | null
+          total_bookings: number | null
+          total_spent: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          last_stay?: string | null
+          loyalty_tier?: string | null
+          name: string
+          nationality?: string | null
+          notes?: string | null
+          phone?: string | null
+          preferences?: string[] | null
+          status?: string | null
+          total_bookings?: number | null
+          total_spent?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          last_stay?: string | null
+          loyalty_tier?: string | null
+          name?: string
+          nationality?: string | null
+          notes?: string | null
+          phone?: string | null
+          preferences?: string[] | null
+          status?: string | null
+          total_bookings?: number | null
+          total_spent?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      gym_equipment: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          last_maintenance: string | null
+          location: string | null
+          name: string
+          purchase_date: string | null
+          serial_number: string | null
+          status: string | null
+          updated_at: string | null
+          warranty_expiration: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          last_maintenance?: string | null
+          location?: string | null
+          name: string
+          purchase_date?: string | null
+          serial_number?: string | null
+          status?: string | null
+          updated_at?: string | null
+          warranty_expiration?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          last_maintenance?: string | null
+          location?: string | null
+          name?: string
+          purchase_date?: string | null
+          serial_number?: string | null
+          status?: string | null
+          updated_at?: string | null
+          warranty_expiration?: string | null
+        }
+        Relationships: []
+      }
+      gym_member_checkins: {
+        Row: {
+          check_in_time: string | null
+          check_out_time: string | null
+          id: string
+          member_id: string
+        }
+        Insert: {
+          check_in_time?: string | null
+          check_out_time?: string | null
+          id?: string
+          member_id: string
+        }
+        Update: {
+          check_in_time?: string | null
+          check_out_time?: string | null
+          id?: string
+          member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_member_checkins_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "gym_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_members: {
+        Row: {
+          check_ins: number | null
+          created_at: string | null
+          email: string
+          end_date: string
+          id: string
+          membership_type: string
+          name: string
+          phone: string | null
+          start_date: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          check_ins?: number | null
+          created_at?: string | null
+          email: string
+          end_date: string
+          id?: string
+          membership_type: string
+          name: string
+          phone?: string | null
+          start_date?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          check_ins?: number | null
+          created_at?: string | null
+          email?: string
+          end_date?: string
+          id?: string
+          membership_type?: string
+          name?: string
+          phone?: string | null
+          start_date?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      gym_trainer_bookings: {
+        Row: {
+          created_at: string | null
+          end_time: string
+          id: string
+          member_id: string
+          notes: string | null
+          session_date: string
+          start_time: string
+          status: string | null
+          trainer_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_time: string
+          id?: string
+          member_id: string
+          notes?: string | null
+          session_date: string
+          start_time: string
+          status?: string | null
+          trainer_id: string
+        }
+        Update: {
+          created_at?: string | null
+          end_time?: string
+          id?: string
+          member_id?: string
+          notes?: string | null
+          session_date?: string
+          start_time?: string
+          status?: string | null
+          trainer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_trainer_bookings_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "gym_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gym_trainer_bookings_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "gym_trainers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_trainers: {
+        Row: {
+          availability: string | null
+          created_at: string | null
+          hourly_rate: number
+          id: string
+          name: string
+          rating: number | null
+          specialization: string[]
+          total_sessions: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          availability?: string | null
+          created_at?: string | null
+          hourly_rate: number
+          id?: string
+          name: string
+          rating?: number | null
+          specialization?: string[]
+          total_sessions?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          availability?: string | null
+          created_at?: string | null
+          hourly_rate?: number
+          id?: string
+          name?: string
+          rating?: number | null
+          specialization?: string[]
+          total_sessions?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      hall_bookings: {
+        Row: {
+          booking_date: string
+          created_at: string | null
+          end_time: string
+          event_name: string
+          guest_id: string | null
+          hall_id: string
+          id: string
+          number_of_guests: number | null
+          organizer_name: string
+          special_requests: string | null
+          start_time: string
+          status: string | null
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          booking_date: string
+          created_at?: string | null
+          end_time: string
+          event_name: string
+          guest_id?: string | null
+          hall_id: string
+          id?: string
+          number_of_guests?: number | null
+          organizer_name: string
+          special_requests?: string | null
+          start_time: string
+          status?: string | null
+          total_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          booking_date?: string
+          created_at?: string | null
+          end_time?: string
+          event_name?: string
+          guest_id?: string | null
+          hall_id?: string
+          id?: string
+          number_of_guests?: number | null
+          organizer_name?: string
+          special_requests?: string | null
+          start_time?: string
+          status?: string | null
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hall_bookings_hall_id_fkey"
+            columns: ["hall_id"]
+            isOneToOne: false
+            referencedRelation: "halls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      halls: {
+        Row: {
+          amenities: string[] | null
+          availability: string | null
+          capacity: number
+          created_at: string | null
+          hourly_rate: number
+          id: string
+          location: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          amenities?: string[] | null
+          availability?: string | null
+          capacity: number
+          created_at?: string | null
+          hourly_rate: number
+          id?: string
+          location: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          amenities?: string[] | null
+          availability?: string | null
+          capacity?: number
+          created_at?: string | null
+          hourly_rate?: number
+          id?: string
+          location?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       hotel_settings: {
         Row: {
           created_at: string
@@ -1275,6 +1624,57 @@ export type Database = {
           phone?: string | null
           role?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      recipes: {
+        Row: {
+          category: string
+          cook_time: number
+          cost: number
+          created_at: string | null
+          description: string | null
+          difficulty: string | null
+          id: string
+          image_url: string | null
+          ingredients: Json
+          instructions: Json
+          name: string
+          prep_time: number
+          servings: number
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          cook_time: number
+          cost: number
+          created_at?: string | null
+          description?: string | null
+          difficulty?: string | null
+          id?: string
+          image_url?: string | null
+          ingredients: Json
+          instructions: Json
+          name: string
+          prep_time: number
+          servings: number
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          cook_time?: number
+          cost?: number
+          created_at?: string | null
+          description?: string | null
+          difficulty?: string | null
+          id?: string
+          image_url?: string | null
+          ingredients?: Json
+          instructions?: Json
+          name?: string
+          prep_time?: number
+          servings?: number
+          updated_at?: string | null
         }
         Relationships: []
       }

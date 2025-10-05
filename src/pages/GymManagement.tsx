@@ -28,128 +28,23 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-interface GymMember {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  membershipType: "day-pass" | "monthly" | "yearly";
-  startDate: string;
-  endDate: string;
-  status: "active" | "expired" | "suspended";
-  checkIns: number;
-}
-
-interface Equipment {
-  id: string;
-  name: string;
-  category: string;
-  status: "available" | "in-use" | "maintenance";
-  location: string;
-  lastMaintenance: string;
-}
-
-interface Trainer {
-  id: string;
-  name: string;
-  specialization: string[];
-  hourlyRate: number;
-  availability: "available" | "busy" | "off-duty";
-  rating: number;
-}
+import { useGymDB } from "@/hooks/useGymDB";
 
 const GymManagement = () => {
-  const [members] = useState<GymMember[]>([
-    {
-      id: "1",
-      name: "John Smith",
-      email: "john@email.com", 
-      phone: "+1234567890",
-      membershipType: "monthly",
-      startDate: "2024-01-01",
-      endDate: "2024-01-31",
-      status: "active",
-      checkIns: 15
-    },
-    {
-      id: "2",
-      name: "Sarah Johnson",
-      email: "sarah@email.com",
-      phone: "+1234567891", 
-      membershipType: "yearly",
-      startDate: "2023-12-01",
-      endDate: "2024-12-01",
-      status: "active",
-      checkIns: 45
-    },
-    {
-      id: "3", 
-      name: "Mike Wilson",
-      email: "mike@email.com",
-      phone: "+1234567892",
-      membershipType: "day-pass",
-      startDate: "2024-01-15",
-      endDate: "2024-01-15", 
-      status: "expired",
-      checkIns: 1
-    }
-  ]);
+  const { 
+    members, 
+    equipment, 
+    trainers, 
+    loading,
+    addMember,
+    checkInMember,
+    addEquipment,
+    updateEquipmentStatus,
+    addTrainer,
+    bookTrainerSession
+  } = useGymDB();
 
-  const [equipment] = useState<Equipment[]>([
-    {
-      id: "1",
-      name: "Treadmill #1",
-      category: "Cardio",
-      status: "in-use",
-      location: "Cardio Zone",
-      lastMaintenance: "2024-01-10"
-    },
-    {
-      id: "2", 
-      name: "Bench Press",
-      category: "Strength",
-      status: "available", 
-      location: "Weight Room",
-      lastMaintenance: "2024-01-08"
-    },
-    {
-      id: "3",
-      name: "Rowing Machine",
-      category: "Cardio", 
-      status: "maintenance",
-      location: "Cardio Zone",
-      lastMaintenance: "2024-01-05"
-    }
-  ]);
-
-  const [trainers] = useState<Trainer[]>([
-    {
-      id: "1",
-      name: "Alex Rodriguez", 
-      specialization: ["Weight Training", "HIIT"],
-      hourlyRate: 80,
-      availability: "available",
-      rating: 4.9
-    },
-    {
-      id: "2",
-      name: "Emma Davis",
-      specialization: ["Yoga", "Pilates"],
-      hourlyRate: 70, 
-      availability: "busy",
-      rating: 4.8
-    },
-    {
-      id: "3",
-      name: "Chris Brown",
-      specialization: ["CrossFit", "Cardio"],
-      hourlyRate: 75,
-      availability: "available", 
-      rating: 4.7
-    }
-  ]);
-
+  const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
   
   // Modal states
@@ -160,8 +55,8 @@ const GymManagement = () => {
   const [equipmentStatusOpen, setEquipmentStatusOpen] = useState(false);
   const [trainerScheduleOpen, setTrainerScheduleOpen] = useState(false);
   const [addEquipmentOpen, setAddEquipmentOpen] = useState(false);
-  const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
-  const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null);
+  const [selectedEquipment, setSelectedEquipment] = useState<any | null>(null);
+  const [selectedTrainer, setSelectedTrainer] = useState<any | null>(null);
 
   const membershipColors = {
     "day-pass": "bg-blue-500",
@@ -324,15 +219,15 @@ const GymManagement = () => {
                       </div>
                     </div>
                     <div className="text-center">
-                      <Badge className={`${membershipColors[member.membershipType]} text-white mb-2`}>
-                        {member.membershipType}
+                      <Badge className={`${membershipColors[member.membership_type]} text-white mb-2`}>
+                        {member.membership_type}
                       </Badge>
                       <div className="text-sm text-muted-foreground">
-                        Expires: {member.endDate}
+                        Expires: {member.end_date}
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold">{member.checkIns}</div>
+                      <div className="text-2xl font-bold">{member.check_ins}</div>
                       <div className="text-sm text-muted-foreground">Check-ins</div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -412,7 +307,7 @@ const GymManagement = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Last Maintenance:</span>
-                      <span className="text-sm">{item.lastMaintenance}</span>
+                      <span className="text-sm">{item.last_maintenance || 'N/A'}</span>
                     </div>
                     <div className="flex gap-2">
                       <Button 
@@ -485,7 +380,7 @@ const GymManagement = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Hourly Rate:</span>
-                      <span className="font-semibold">${trainer.hourlyRate}</span>
+                      <span className="font-semibold">${trainer.hourly_rate}</span>
                     </div>
                     <div className="flex gap-2">
                       <Button 

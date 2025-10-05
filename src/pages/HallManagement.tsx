@@ -23,81 +23,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
-import { useHalls } from "@/hooks/useHalls";
-import { useGuests } from "@/hooks/useGuests";
+import { useHallsDB } from "@/hooks/useHallsDB";
+import { useGuestsDB } from "@/hooks/useGuestsDB";
 import { toast } from "@/hooks/use-toast";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 
-interface Hall {
-  id: string;
-  name: string;
-  capacity: number;
-  location: string;
-  hourlyRate: number;
-  amenities: string[];
-  availability: "available" | "booked" | "maintenance";
-}
-
-interface Booking {
-  id: string;
-  hallId: string;
-  hallName: string;
-  event: string;
-  organizer: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  guests: number;
-  status: "confirmed" | "pending" | "cancelled";
-  totalAmount: number;
-}
-
 const HallManagement = () => {
-  const { halls } = useHalls();
-  const { guests: registeredGuests } = useGuests();
-
-  const [bookings] = useState<Booking[]>([
-    {
-      id: "1",
-      hallId: "1",
-      hallName: "Grand Ballroom",
-      event: "Wedding Reception",
-      organizer: "Smith Family",
-      date: "2024-01-20",
-      startTime: "18:00",
-      endTime: "23:00",
-      guests: 350,
-      status: "confirmed",
-      totalAmount: 1500
-    },
-    {
-      id: "2",
-      hallId: "2", 
-      hallName: "Conference Hall A",
-      event: "Corporate Meeting",
-      organizer: "Tech Corp Ltd",
-      date: "2024-01-18",
-      startTime: "09:00", 
-      endTime: "17:00",
-      guests: 80,
-      status: "confirmed",
-      totalAmount: 1200
-    },
-    {
-      id: "3",
-      hallId: "3",
-      hallName: "Banquet Hall", 
-      event: "Birthday Party",
-      organizer: "Johnson Family",
-      date: "2024-01-25",
-      startTime: "15:00",
-      endTime: "20:00", 
-      guests: 120,
-      status: "pending",
-      totalAmount: 1000
-    }
-  ]);
+  const { halls, bookings, loading, createBooking, updateBooking, cancelBooking } = useHallsDB();
+  const { guests: registeredGuests } = useGuestsDB();
 
   const [activeTab, setActiveTab] = useState("halls");
   const [searchQuery, setSearchQuery] = useState("");
@@ -162,7 +96,7 @@ const HallManagement = () => {
       name: hall.name,
       guestName: guest?.name || "Unknown Guest",
       days: days,
-      price: hall.hourlyRate,
+      price: hall.hourly_rate,
       category: "facilities",
       timestamp: Date.now()
     };
@@ -270,7 +204,7 @@ const HallManagement = () => {
                         <div className="text-sm text-muted-foreground">Hourly Rate</div>
                         <div className="flex items-center gap-1">
                           <DollarSign className="h-4 w-4" />
-                          <span className="font-semibold">${hall.hourlyRate}</span>
+                          <span className="font-semibold">${hall.hourly_rate}</span>
                         </div>
                       </div>
                     </div>
@@ -357,58 +291,61 @@ const HallManagement = () => {
 
           {/* Bookings List */}
           <div className="space-y-4">
-            {bookings.map((booking) => (
-              <Card key={booking.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-4">
-                        <h3 className="text-lg font-semibold">{booking.event}</h3>
-                        <Badge className={`${statusColors[booking.status]} text-white`}>
-                          {booking.status}
-                        </Badge>
+            {bookings.map((booking) => {
+              const hall = halls.find(h => h.id === booking.hall_id);
+              return (
+                <Card key={booking.id}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-4">
+                          <h3 className="text-lg font-semibold">{booking.event_name}</h3>
+                          <Badge className={`${statusColors[booking.status]} text-white`}>
+                            {booking.status}
+                          </Badge>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Hall: </span>
+                            <span className="font-medium">{hall?.name || 'Unknown Hall'}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Organizer: </span>
+                            <span className="font-medium">{booking.organizer_name}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Date & Time: </span>
+                            <span className="font-medium">{booking.booking_date} {booking.start_time}-{booking.end_time}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Guests: </span>
+                            <span className="font-medium">{booking.number_of_guests || 0}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Hall: </span>
-                          <span className="font-medium">{booking.hallName}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Organizer: </span>
-                          <span className="font-medium">{booking.organizer}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Date & Time: </span>
-                          <span className="font-medium">{booking.date} {booking.startTime}-{booking.endTime}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Guests: </span>
-                          <span className="font-medium">{booking.guests}</span>
+                      <div className="text-right space-y-2">
+                        <div className="text-2xl font-bold">${Number(booking.total_amount).toLocaleString()}</div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          {booking.status === "pending" && (
+                            <>
+                              <Button size="sm" variant="default">
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="destructive">
+                                <XCircle className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
-                    <div className="text-right space-y-2">
-                      <div className="text-2xl font-bold">${booking.totalAmount}</div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        {booking.status === "pending" && (
-                          <>
-                            <Button size="sm" variant="default">
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" variant="destructive">
-                              <XCircle className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </TabsContent>
 
@@ -437,25 +374,28 @@ const HallManagement = () => {
                   <h4 className="font-medium">Bookings for {selectedDate ? format(selectedDate, "PPP") : "Select a date"}</h4>
                   <div className="space-y-2">
                     {bookings
-                      .filter(booking => booking.date === (selectedDate ? format(selectedDate, "yyyy-MM-dd") : ""))
-                      .map(booking => (
-                        <div key={booking.id} className="p-3 border rounded-lg">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-medium">{booking.event}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {booking.hallName} • {booking.startTime}-{booking.endTime}
+                      .filter(booking => booking.booking_date === (selectedDate ? format(selectedDate, "yyyy-MM-dd") : ""))
+                      .map(booking => {
+                        const hall = halls.find(h => h.id === booking.hall_id);
+                        return (
+                          <div key={booking.id} className="p-3 border rounded-lg">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-medium">{booking.event_name}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {hall?.name || 'Unknown Hall'} • {booking.start_time}-{booking.end_time}
+                                </div>
                               </div>
+                              <Badge className={`${statusColors[booking.status]} text-white`}>
+                                {booking.status}
+                              </Badge>
                             </div>
-                            <Badge className={`${statusColors[booking.status]} text-white`}>
-                              {booking.status}
-                            </Badge>
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     }
                     {selectedDate && bookings.filter(booking => 
-                      booking.date === format(selectedDate, "yyyy-MM-dd")
+                      booking.booking_date === format(selectedDate, "yyyy-MM-dd")
                     ).length === 0 && (
                       <div className="text-center py-8 text-muted-foreground">
                         <CalendarIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -521,7 +461,7 @@ const HallManagement = () => {
                   <SelectContent>
                     {halls.filter(hall => hall.availability === "available").map((hall) => (
                       <SelectItem key={hall.id} value={hall.id}>
-                        {hall.name} - ${hall.hourlyRate}/hr
+                        {hall.name} - ${hall.hourly_rate}/hr
                       </SelectItem>
                     ))}
                   </SelectContent>

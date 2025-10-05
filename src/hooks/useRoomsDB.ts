@@ -78,6 +78,24 @@ export const useRoomsDB = () => {
     }
   };
 
+  // Check if room has active bookings
+  const checkRoomAvailability = async (roomId: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from("room_bookings")
+        .select("*")
+        .eq("room_id", roomId)
+        .eq("booking_status", "active");
+
+      if (error) throw error;
+      
+      return (data || []).length === 0;
+    } catch (error) {
+      console.error("Error checking room availability:", error);
+      return false;
+    }
+  };
+
   // Create a room booking (check-in)
   const createRoomBooking = async (bookingData: {
     room_id: string;
@@ -90,6 +108,18 @@ export const useRoomsDB = () => {
     special_requests?: string;
   }) => {
     try {
+      // Check for duplicate bookings first
+      const isAvailable = await checkRoomAvailability(bookingData.room_id);
+      
+      if (!isAvailable) {
+        toast({
+          title: "Room Unavailable",
+          description: "This room already has an active booking. Please choose another room.",
+          variant: "destructive",
+        });
+        throw new Error("Room already has an active booking");
+      }
+
       const { data, error } = await supabase
         .from('room_bookings')
         .insert([{
@@ -113,11 +143,13 @@ export const useRoomsDB = () => {
       return data as RoomBooking;
     } catch (error) {
       console.error('Error creating booking:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create room booking",
-        variant: "destructive",
-      });
+      if ((error as Error).message !== "Room already has an active booking") {
+        toast({
+          title: "Error",
+          description: "Failed to create room booking",
+          variant: "destructive",
+        });
+      }
       throw error;
     }
   };

@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import AddGuestModal from "@/components/guest/AddGuestModal";
 import GuestHistoryModal from "@/components/guest/GuestHistoryModal";
 import EditGuestModal from "@/components/guest/EditGuestModal";
+import { useGuestsDB } from "@/hooks/useGuestsDB";
+import { useRoomsDB } from "@/hooks/useRoomsDB";
 import {
   Users, 
   Search,
@@ -23,34 +25,11 @@ import {
   AlertCircle
 } from "lucide-react";
 
-interface Guest {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  nationality: string;
-  joinDate: string;
-  totalBookings: number;
-  totalSpent: number;
-  loyaltyTier: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
-  status: 'active' | 'vip' | 'blacklisted';
-  lastStay: string;
-  preferences: string[];
-  notes: string;
-}
-
-interface CurrentStay {
-  guestId: string;
-  guestName: string;
-  roomNumber: string;
-  checkIn: string;
-  checkOut: string;
-  status: 'checked-in' | 'checked-out' | 'no-show';
-}
-
 const GuestManagement = () => {
   const { toast } = useToast();
+  const { guests, loading, addGuest, updateGuest } = useGuestsDB();
+  const { bookings } = useRoomsDB();
+  
   const [activeTab, setActiveTab] = useState("guests");
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -59,59 +38,17 @@ const GuestManagement = () => {
   const [selectedGuestName, setSelectedGuestName] = useState("");
   const [selectedGuestId, setSelectedGuestId] = useState("");
 
-  const [guests] = useState<Guest[]>([
-    {
-      id: "G001",
-      name: "John Smith",
-      email: "john.smith@email.com",
-      phone: "+1 (555) 123-4567",
-      address: "123 Main St, New York, NY 10001",
-      nationality: "USA",
-      joinDate: "2023-01-15",
-      totalBookings: 15,
-      totalSpent: 12450,
-      loyaltyTier: 'Gold',
-      status: 'vip',
-      lastStay: "2024-01-10",
-      preferences: ["Non-smoking", "High floor", "City view"],
-      notes: "Prefers late checkout, vegetarian meals"
-    },
-    {
-      id: "G002",
-      name: "Maria Garcia",
-      email: "maria.garcia@email.com",
-      phone: "+1 (555) 987-6543",
-      address: "456 Oak Ave, Los Angeles, CA 90210",
-      nationality: "Spain",
-      joinDate: "2023-06-20",
-      totalBookings: 8,
-      totalSpent: 6780,
-      loyaltyTier: 'Silver',
-      status: 'active',
-      lastStay: "2023-12-15",
-      preferences: ["Ground floor", "Pet-friendly"],
-      notes: "Travels with assistance dog"
-    }
-  ]);
-
-  const [currentStays] = useState<CurrentStay[]>([
-    {
-      guestId: "G001",
-      guestName: "John Smith",
-      roomNumber: "305",
-      checkIn: "2024-01-10",
-      checkOut: "2024-01-15",
-      status: 'checked-in'
-    },
-    {
-      guestId: "G003",
-      guestName: "David Johnson",
-      roomNumber: "120",
-      checkIn: "2024-01-11",
-      checkOut: "2024-01-14",
-      status: 'checked-in'
-    }
-  ]);
+  // Map bookings to current stays
+  const currentStays = bookings
+    .filter(b => b.booking_status === 'active')
+    .map(booking => ({
+      guestId: booking.id,
+      guestName: booking.guest_name,
+      roomNumber: `Room ${booking.room_id}`,
+      checkIn: booking.check_in_date,
+      checkOut: booking.check_out_date,
+      status: 'checked-in' as const
+    }));
 
   const filteredGuests = guests.filter(guest =>
     guest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -148,7 +85,7 @@ const GuestManagement = () => {
     const total = guests.length;
     const vip = guests.filter(g => g.status === 'vip').length;
     const active = guests.filter(g => g.status === 'active').length;
-    const totalRevenue = guests.reduce((sum, g) => sum + g.totalSpent, 0);
+    const totalRevenue = guests.reduce((sum, g) => sum + g.total_spent, 0);
 
     return { total, vip, active, totalRevenue };
   };
@@ -164,7 +101,7 @@ const GuestManagement = () => {
     setShowHistoryModal(true);
   };
 
-  const handleEditProfile = (guest: Guest) => {
+  const handleEditProfile = (guest: typeof guests[0]) => {
     setSelectedGuestId(guest.id);
     setSelectedGuestName(guest.name);
     setShowEditModal(true);
@@ -218,9 +155,9 @@ const GuestManagement = () => {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Badge className={getTierColor(guest.loyaltyTier)}>
+                      <Badge className={getTierColor(guest.loyalty_tier)}>
                         <Star className="h-3 w-3 mr-1" />
-                        {guest.loyaltyTier}
+                        {guest.loyalty_tier}
                       </Badge>
                       <Badge className={getStatusColor(guest.status)}>
                         {guest.status.toUpperCase()}
@@ -252,15 +189,15 @@ const GuestManagement = () => {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{guest.totalBookings} bookings</span>
+                          <span className="text-sm">{guest.total_bookings} bookings</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <CreditCard className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">${guest.totalSpent.toLocaleString()} spent</span>
+                          <span className="text-sm">${guest.total_spent.toLocaleString()} spent</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">Last stay: {guest.lastStay}</span>
+                          <span className="text-sm">Last stay: {guest.last_stay || 'N/A'}</span>
                         </div>
                       </div>
                     </div>
