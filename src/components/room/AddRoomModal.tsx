@@ -15,17 +15,11 @@ interface AddRoomModalProps {
 }
 
 const roomTypes = [
-  "Standard Single",
-  "Standard Double", 
-  "King Size",
-  "Queen Size",
-  "Twin Beds",
-  "Suite",
-  "Deluxe Single",
-  "Deluxe Double",
-  "Presidential Suite",
-  "Executive Room"
+  { value: "standard", label: "Standard Room" },
+  { value: "deluxe", label: "Deluxe Room" },
+  { value: "suite", label: "Suite" }
 ];
+
 
 const availableAmenities = [
   "WiFi", "Air Condition", "Television", "Reading Table & Chair", 
