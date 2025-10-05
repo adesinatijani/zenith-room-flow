@@ -129,16 +129,16 @@ const RoomManagement = () => {
 
   const stats = getStatusStats();
 
-  const handleAddRoom = async (newRoom: FrontendRoom) => {
-    await createRoom({
-      room_number: newRoom.number,
-      room_type: newRoom.type,
-      rate: newRoom.rate,
-      floor_number: newRoom.floor,
-      capacity: newRoom.roomSize,
-      amenities: newRoom.amenities,
-      description: newRoom.bedType
-    });
+  const handleAddRoom = async (roomData: {
+    room_number: string;
+    room_type: string;
+    rate: number;
+    floor_number: number;
+    capacity: number;
+    amenities: string[];
+    description: string;
+  }) => {
+    await createRoom(roomData);
   };
 
   const handleEditRoom = (room: FrontendRoom) => {
