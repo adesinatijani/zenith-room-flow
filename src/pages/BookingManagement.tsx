@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { toast } from "@/hooks/use-toast";
 import { 
   Calendar,
   Users,
@@ -63,7 +64,7 @@ interface OccupiedRoom {
 
 const BookingManagement = () => {
   const { formatCurrency } = useGlobalSettings();
-  const { rooms, bookings, loading } = useRoomsDB();
+  const { rooms, bookings, loading, updateBookingStatus, updateRoomStatus } = useRoomsDB();
   const { halls, bookings: hallBookingsData } = useHalls();
   
   // Map room bookings from database to frontend format
@@ -158,6 +159,21 @@ const BookingManagement = () => {
   };
 
   const stats = getReservationStats();
+
+  const handleCheckOut = async (bookingId: string, roomId: string) => {
+    try {
+      // Update booking status to completed
+      await updateBookingStatus(bookingId, 'completed');
+      // Update room status to cleaning (vacant-dirty)
+      await updateRoomStatus(roomId, 'cleaning');
+      toast({
+        title: "Check-out Successful",
+        description: "Guest has been checked out",
+      });
+    } catch (error) {
+      // Error already handled by hook
+    }
+  };
 
   if (loading) {
     return <div className="p-6">Loading bookings...</div>;
@@ -358,7 +374,14 @@ const BookingManagement = () => {
                           </Button>
                         )}
                         {reservation.type === "room" && reservation.status === "checked-in" && (
-                          <Button size="sm" variant="secondary">
+                          <Button 
+                            size="sm" 
+                            variant="secondary"
+                            onClick={() => {
+                              const booking = bookings.find(b => b.id === reservation.id);
+                              if (booking) handleCheckOut(booking.id, booking.room_id);
+                            }}
+                          >
                             Check Out
                           </Button>
                         )}
@@ -423,7 +446,14 @@ const BookingManagement = () => {
                       <Button size="sm" variant="outline">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="secondary">
+                      <Button 
+                        size="sm" 
+                        variant="secondary"
+                        onClick={() => {
+                          const booking = bookings.find(b => b.id === room.id);
+                          if (booking) handleCheckOut(booking.id, booking.room_id);
+                        }}
+                      >
                         Check Out
                       </Button>
                     </div>
@@ -535,7 +565,14 @@ const BookingManagement = () => {
                           </Button>
                         )}
                         {reservation.status === "checked-in" && (
-                          <Button size="sm" variant="secondary">
+                          <Button 
+                            size="sm" 
+                            variant="secondary"
+                            onClick={() => {
+                              const booking = bookings.find(b => b.id === reservation.id);
+                              if (booking) handleCheckOut(booking.id, booking.room_id);
+                            }}
+                          >
                             Check Out
                           </Button>
                         )}

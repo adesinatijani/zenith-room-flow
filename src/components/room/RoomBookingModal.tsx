@@ -33,8 +33,9 @@ export const RoomBookingModal = ({ open, onOpenChange, room, onBookingConfirm }:
   const [checkInDate, setCheckInDate] = useState<Date | undefined>(new Date());
   const [nights, setNights] = useState("1");
   const [specialRequests, setSpecialRequests] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
     if (!room) return;
     
     if (!selectedGuest || !checkInDate || !nights) {
@@ -42,17 +43,24 @@ export const RoomBookingModal = ({ open, onOpenChange, room, onBookingConfirm }:
       return;
     }
 
-    const guest = guests.find(g => g.id === selectedGuest);
-    if (!guest) {
-      toast.error("Selected guest not found");
+    if (isSubmitting) {
       return;
     }
 
-    const numberOfNights = parseInt(nights);
-    const checkOutDate = new Date(checkInDate);
-    checkOutDate.setDate(checkOutDate.getDate() + numberOfNights);
+    setIsSubmitting(true);
 
-    const booking = {
+    try {
+      const guest = guests.find(g => g.id === selectedGuest);
+      if (!guest) {
+        toast.error("Selected guest not found");
+        return;
+      }
+
+      const numberOfNights = parseInt(nights);
+      const checkOutDate = new Date(checkInDate);
+      checkOutDate.setDate(checkOutDate.getDate() + numberOfNights);
+
+      const booking = {
       id: Date.now().toString(),
       roomId: room.id,
       roomNumber: room.number,
@@ -69,35 +77,40 @@ export const RoomBookingModal = ({ open, onOpenChange, room, onBookingConfirm }:
       bookingDate: format(new Date(), "yyyy-MM-dd HH:mm")
     };
 
-    // Send to Hotel Services order list
-    const orderItem = {
-      id: Date.now().toString() + "_room",
-      name: `Room ${room.number} - ${room.type}`,
-      category: "room",
-      price: room.rate,
-      image: "/placeholder.svg",
-      description: `${numberOfNights} night${numberOfNights > 1 ? 's' : ''} stay`,
-      guestName: guest.name,
-      checkIn: booking.checkIn,
-      checkOut: booking.checkOut,
-      specialRequests
-    };
+      // Send to Hotel Services order list
+      const orderItem = {
+        id: Date.now().toString() + "_room",
+        name: `Room ${room.number} - ${room.type}`,
+        category: "room",
+        price: room.rate,
+        image: "/placeholder.svg",
+        description: `${numberOfNights} night${numberOfNights > 1 ? 's' : ''} stay`,
+        guestName: guest.name,
+        checkIn: booking.checkIn,
+        checkOut: booking.checkOut,
+        specialRequests
+      };
 
-    // This will be handled by the parent component through the callback
-    // Add to Hotel Services POS system
-    if ((window as any).addRoomBookingToOrder) {
-      (window as any).addRoomBookingToOrder(orderItem, numberOfNights);
+      // This will be handled by the parent component through the callback
+      // Add to Hotel Services POS system
+      if ((window as any).addRoomBookingToOrder) {
+        (window as any).addRoomBookingToOrder(orderItem, numberOfNights);
+      }
+
+      await onBookingConfirm(booking);
+      toast.success(`Room ${room.number} booked for ${guest.name} (${numberOfNights} night${numberOfNights > 1 ? 's' : ''})`);
+      onOpenChange(false);
+      
+      // Reset form
+      setSelectedGuest("");
+      setCheckInDate(new Date());
+      setNights("1");
+      setSpecialRequests("");
+    } catch (error) {
+      // Error already handled by parent
+    } finally {
+      setIsSubmitting(false);
     }
-
-    onBookingConfirm(booking);
-    toast.success(`Room ${room.number} booked for ${guest.name} (${numberOfNights} night${numberOfNights > 1 ? 's' : ''})`);
-    onOpenChange(false);
-    
-    // Reset form
-    setSelectedGuest("");
-    setCheckInDate(new Date());
-    setNights("1");
-    setSpecialRequests("");
   };
 
   if (!room) return null;

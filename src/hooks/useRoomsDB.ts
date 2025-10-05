@@ -224,6 +224,34 @@ export const useRoomsDB = () => {
     }
   };
 
+  // Update booking status
+  const updateBookingStatus = async (bookingId: string, booking_status: RoomBooking['booking_status']) => {
+    try {
+      const { error } = await supabase
+        .from('room_bookings')
+        .update({ booking_status, updated_at: new Date().toISOString() })
+        .eq('id', bookingId);
+      
+      if (error) throw error;
+      
+      // Refresh data
+      await Promise.all([fetchRooms(), fetchBookings()]);
+      
+      toast({
+        title: "Success",
+        description: "Booking status updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating booking status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update booking status",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   // Delete a room
   const deleteRoom = async (roomId: string) => {
     try {
@@ -297,6 +325,7 @@ export const useRoomsDB = () => {
     getAvailableRooms,
     getRoomByNumber,
     updateRoomStatus,
+    updateBookingStatus,
     refreshData: () => Promise.all([fetchRooms(), fetchBookings()])
   };
 };
