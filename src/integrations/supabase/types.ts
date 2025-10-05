@@ -2229,6 +2229,14 @@ export type Database = {
           used_leave_days: number
         }[]
       }
+      get_user_department: {
+        Args: { user_id: string }
+        Returns: string
+      }
+      get_user_role: {
+        Args: { user_id: string }
+        Returns: string
+      }
       has_booking_access: {
         Args: Record<PropertyKey, never>
         Returns: boolean
