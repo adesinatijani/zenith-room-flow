@@ -15,16 +15,9 @@ interface AddRoomModalProps {
 }
 
 const roomTypes = [
-  "Standard Single",
-  "Standard Double", 
-  "King Size",
-  "Queen Size",
-  "Twin Beds",
-  "Suite",
-  "Deluxe Single",
-  "Deluxe Double",
-  "Presidential Suite",
-  "Executive Room"
+  { value: "standard", label: "Standard Room" },
+  { value: "deluxe", label: "Deluxe Room" },
+  { value: "suite", label: "Suite" }
 ];
 
 
@@ -112,9 +105,12 @@ export const AddRoomModal = ({ open, onOpenChange, onRoomAdd }: AddRoomModalProp
                 </SelectTrigger>
                 <SelectContent>
                   {roomTypes.map(type => (
-                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
+
               </Select>
             </div>
             
