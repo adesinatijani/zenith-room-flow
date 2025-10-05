@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { useGuests } from "@/hooks/useGuests";
 import { toast } from "sonner";
 import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
+import { useRoomsDB } from "@/hooks/useRoomsDB";
 
 interface Room {
   id: string;
@@ -22,21 +23,38 @@ interface Room {
 interface RoomBookingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  room: Room | null;
+  room?: Room | null;
+  availableRooms?: Room[];
   onBookingConfirm: (booking: any) => void;
 }
 
-export const RoomBookingModal = ({ open, onOpenChange, room, onBookingConfirm }: RoomBookingModalProps) => {
+export const RoomBookingModal = ({ open, onOpenChange, room, availableRooms, onBookingConfirm }: RoomBookingModalProps) => {
   const { guests } = useGuests();
   const { formatCurrency } = useGlobalSettings();
+  const { rooms } = useRoomsDB();
+  const [selectedRoom, setSelectedRoom] = useState("");
   const [selectedGuest, setSelectedGuest] = useState("");
   const [checkInDate, setCheckInDate] = useState<Date | undefined>(new Date());
   const [nights, setNights] = useState("1");
   const [specialRequests, setSpecialRequests] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Get available rooms from prop or all available rooms from database
+  const roomsToShow = availableRooms || rooms.filter(r => r.status === 'available').map(r => ({
+    id: r.id,
+    number: r.room_number,
+    type: r.room_type,
+    rate: Number(r.rate)
+  }));
+
+  // Use pre-selected room or selected room from dropdown
+  const currentRoom = room || roomsToShow.find(r => r.id === selectedRoom);
+
   const handleBooking = async () => {
-    if (!room) return;
+    if (!currentRoom) {
+      toast.error("Please select a room");
+      return;
+    }
     
     if (!selectedGuest || !checkInDate || !nights) {
       toast.error("Please fill in all required fields");
@@ -62,16 +80,16 @@ export const RoomBookingModal = ({ open, onOpenChange, room, onBookingConfirm }:
 
       const booking = {
       id: Date.now().toString(),
-      roomId: room.id,
-      roomNumber: room.number,
-      roomType: room.type,
+      roomId: currentRoom.id,
+      roomNumber: currentRoom.number,
+      roomType: currentRoom.type,
       guestId: guest.id,
       guestName: guest.name,
       checkIn: format(checkInDate, "yyyy-MM-dd"),
       checkOut: format(checkOutDate, "yyyy-MM-dd"),
       nights: numberOfNights,
-      rate: room.rate,
-      totalAmount: room.rate * numberOfNights,
+      rate: currentRoom.rate,
+      totalAmount: currentRoom.rate * numberOfNights,
       specialRequests,
       status: "confirmed",
       bookingDate: format(new Date(), "yyyy-MM-dd HH:mm")
@@ -80,9 +98,9 @@ export const RoomBookingModal = ({ open, onOpenChange, room, onBookingConfirm }:
       // Send to Hotel Services order list
       const orderItem = {
         id: Date.now().toString() + "_room",
-        name: `Room ${room.number} - ${room.type}`,
+        name: `Room ${currentRoom.number} - ${currentRoom.type}`,
         category: "room",
-        price: room.rate,
+        price: currentRoom.rate,
         image: "/placeholder.svg",
         description: `${numberOfNights} night${numberOfNights > 1 ? 's' : ''} stay`,
         guestName: guest.name,
@@ -98,10 +116,11 @@ export const RoomBookingModal = ({ open, onOpenChange, room, onBookingConfirm }:
       }
 
       await onBookingConfirm(booking);
-      toast.success(`Room ${room.number} booked for ${guest.name} (${numberOfNights} night${numberOfNights > 1 ? 's' : ''})`);
+      toast.success(`Room ${currentRoom.number} booked for ${guest.name} (${numberOfNights} night${numberOfNights > 1 ? 's' : ''})`);
       onOpenChange(false);
       
       // Reset form
+      setSelectedRoom("");
       setSelectedGuest("");
       setCheckInDate(new Date());
       setNights("1");
@@ -113,19 +132,35 @@ export const RoomBookingModal = ({ open, onOpenChange, room, onBookingConfirm }:
     }
   };
 
-  if (!room) return null;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Book Room {room.number}</DialogTitle>
+          <DialogTitle>Book Room {currentRoom ? currentRoom.number : ''}</DialogTitle>
           <DialogDescription>
-            {room.type} - {formatCurrency(room.rate)}/night
+            {currentRoom ? `${currentRoom.type} - ${formatCurrency(currentRoom.rate)}/night` : 'Select a room to continue'}
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">
+          {!room && (
+            <div>
+              <Label htmlFor="room">Select Room *</Label>
+              <Select value={selectedRoom} onValueChange={setSelectedRoom}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose an available room" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roomsToShow.map(r => (
+                    <SelectItem key={r.id} value={r.id}>
+                      Room {r.number} - {r.type} ({formatCurrency(r.rate)}/night)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div>
             <Label htmlFor="guest">Select Guest *</Label>
             <Select value={selectedGuest} onValueChange={setSelectedGuest}>
@@ -186,14 +221,14 @@ export const RoomBookingModal = ({ open, onOpenChange, room, onBookingConfirm }:
             />
           </div>
 
-          {checkInDate && nights && (
+          {checkInDate && nights && currentRoom && (
             <div className="bg-muted p-3 rounded-lg">
               <h4 className="font-medium mb-2">Booking Summary</h4>
               <div className="text-sm space-y-1">
                 <p>Check-in: {format(checkInDate, "PPP")}</p>
                 <p>Check-out: {format(new Date(checkInDate.getTime() + parseInt(nights) * 24 * 60 * 60 * 1000), "PPP")}</p>
                 <p>Duration: {nights} night{parseInt(nights) > 1 ? 's' : ''}</p>
-                <p className="font-medium">Total: {formatCurrency(room.rate * parseInt(nights))}</p>
+                <p className="font-medium">Total: {formatCurrency(currentRoom.rate * parseInt(nights))}</p>
               </div>
             </div>
           )}

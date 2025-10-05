@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRoomsDB } from "@/hooks/useRoomsDB";
 import { useHalls } from "@/hooks/useHalls";
 import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
+import { RoomBookingModal } from "@/components/room/RoomBookingModal";
 
 interface RoomReservation {
   id: string;
@@ -64,8 +65,10 @@ interface OccupiedRoom {
 
 const BookingManagement = () => {
   const { formatCurrency } = useGlobalSettings();
-  const { rooms, bookings, loading, updateBookingStatus, updateRoomStatus } = useRoomsDB();
+  const { rooms, bookings, loading, updateBookingStatus, updateRoomStatus, createRoomBooking } = useRoomsDB();
   const { halls, bookings: hallBookingsData } = useHalls();
+  
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   
   // Map room bookings from database to frontend format
   const roomReservations: RoomReservation[] = bookings.map(booking => {
@@ -175,18 +178,50 @@ const BookingManagement = () => {
     }
   };
 
+  const handleNewBooking = async (bookingData: any) => {
+    try {
+      const room = rooms.find(r => r.id === bookingData.roomId);
+      if (!room) {
+        toast({
+          title: "Error",
+          description: "Room not found",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      await createRoomBooking({
+        room_id: bookingData.roomId,
+        guest_name: bookingData.guestName,
+        check_out_date: bookingData.checkOut,
+        nights: bookingData.nights,
+        total_amount: bookingData.totalAmount,
+        special_requests: bookingData.specialRequests
+      });
+    } catch (error) {
+      // Error already handled by hook
+    }
+  };
+
   if (loading) {
     return <div className="p-6">Loading bookings...</div>;
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <>
+      <RoomBookingModal
+        open={isBookingModalOpen}
+        onOpenChange={setIsBookingModalOpen}
+        onBookingConfirm={handleNewBooking}
+      />
+      
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Booking Management</h1>
           <p className="text-muted-foreground">Manage room and hall bookings - showing present and future engagements to avoid booking conflicts</p>
         </div>
-        <Button>
+        <Button onClick={() => setIsBookingModalOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           New Booking
         </Button>
@@ -708,6 +743,7 @@ const BookingManagement = () => {
         </TabsContent>
       </Tabs>
     </div>
+    </>
   );
 };
 
