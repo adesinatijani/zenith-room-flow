@@ -50,11 +50,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
       
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error fetching profile:', error);
+        toast({
+          title: "Profile Error",
+          description: "Could not load user profile. Please contact support if this persists.",
+          variant: "destructive",
+        });
         return null;
+      }
+      
+      // If no profile exists, create one with default staff role
+      if (!data) {
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert([{
+            id: userId,
+            role: 'staff',
+            is_active: true
+          }])
+          .select()
+          .maybeSingle();
+        
+        if (createError) {
+          console.error('Error creating profile:', createError);
+          return null;
+        }
+        
+        return newProfile;
       }
       
       return data;
