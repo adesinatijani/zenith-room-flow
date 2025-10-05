@@ -45,7 +45,7 @@ export const AddRoomModal = ({ open, onOpenChange, onRoomAdd }: AddRoomModalProp
     amenities: [] as string[]
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.number || !formData.type || !formData.rate || !formData.floor) {
@@ -53,24 +53,24 @@ export const AddRoomModal = ({ open, onOpenChange, onRoomAdd }: AddRoomModalProp
       return;
     }
 
-    const newRoom = {
-      id: Date.now().toString(),
-      number: formData.number,
-      type: formData.type as any,
-      status: "ready" as const,
-      rate: parseFloat(formData.rate),
-      floor: parseInt(formData.floor),
-      bedType: formData.bedType || formData.type,
-      roomSize: parseFloat(formData.roomSize) || 30,
-      amenities: formData.amenities
-    };
-
-    onRoomAdd(newRoom);
-    toast.success("Room added successfully");
-    onOpenChange(false);
-    setFormData({
-      number: "", type: "", rate: "", floor: "", bedType: "", roomSize: "", amenities: []
-    });
+    try {
+      await onRoomAdd({
+        room_number: formData.number,
+        room_type: formData.type,
+        rate: parseFloat(formData.rate),
+        floor_number: parseInt(formData.floor),
+        capacity: parseFloat(formData.roomSize) || 30,
+        amenities: formData.amenities,
+        description: formData.bedType || formData.type
+      });
+      
+      onOpenChange(false);
+      setFormData({
+        number: "", type: "", rate: "", floor: "", bedType: "", roomSize: "", amenities: []
+      });
+    } catch (error) {
+      // Error is already handled in the hook
+    }
   };
 
   const toggleAmenity = (amenity: string) => {
