@@ -47,6 +47,27 @@ interface FrontendRoom {
   roomSize: number;
 }
 
+// Status conversion helpers
+const convertStatusToDb = (frontendStatus: FrontendRoom['status']): string => {
+  const statusMap: Record<FrontendRoom['status'], string> = {
+    'ready': 'available',
+    'occupied': 'occupied',
+    'vacant-dirty': 'cleaning',
+    'under-repairs': 'maintenance'
+  };
+  return statusMap[frontendStatus];
+};
+
+const convertStatusToFrontend = (dbStatus: string): FrontendRoom['status'] => {
+  const statusMap: Record<string, FrontendRoom['status']> = {
+    'available': 'ready',
+    'occupied': 'occupied',
+    'cleaning': 'vacant-dirty',
+    'maintenance': 'under-repairs'
+  };
+  return statusMap[dbStatus] || 'ready';
+};
+
 const RoomManagement = () => {
   const { formatCurrency } = useGlobalSettings();
   const { rooms: dbRooms, bookings, loading, createRoom, updateRoom, deleteRoom, createRoomBooking } = useRoomsDB();
@@ -55,18 +76,11 @@ const RoomManagement = () => {
   const rooms: FrontendRoom[] = dbRooms.map(room => {
     const booking = bookings.find(b => b.room_id === room.id && b.booking_status === 'active');
     
-    // Map database status to frontend status
-    let frontendStatus: FrontendRoom['status'] = 'ready';
-    if (room.status === 'available') frontendStatus = 'ready';
-    else if (room.status === 'occupied') frontendStatus = 'occupied';
-    else if (room.status === 'cleaning') frontendStatus = 'vacant-dirty';
-    else if (room.status === 'maintenance') frontendStatus = 'under-repairs';
-    
     return {
       id: room.id,
       number: room.room_number,
       type: room.room_type as any,
-      status: frontendStatus,
+      status: convertStatusToFrontend(room.status),
       guest: booking?.guest_name,
       checkIn: booking?.check_in_date,
       checkOut: booking?.check_out_date,
@@ -165,7 +179,7 @@ const RoomManagement = () => {
       capacity: updatedRoom.roomSize,
       amenities: updatedRoom.amenities,
       description: updatedRoom.bedType,
-      status: updatedRoom.status === 'ready' ? 'available' : updatedRoom.status as any
+      status: convertStatusToDb(updatedRoom.status) as any
     });
   };
 

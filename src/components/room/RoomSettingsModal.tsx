@@ -56,9 +56,28 @@ export const RoomSettingsModal = ({ open, onOpenChange, room, onRoomUpdate, onRo
   const handleSave = () => {
     if (!room) return;
 
+    // Convert frontend status to database status
+    let dbStatus: Room['status'];
+    switch (status) {
+      case 'ready':
+        dbStatus = 'ready';
+        break;
+      case 'occupied':
+        dbStatus = 'occupied';
+        break;
+      case 'vacant-dirty':
+        dbStatus = 'vacant-dirty';
+        break;
+      case 'under-repairs':
+        dbStatus = 'under-repairs';
+        break;
+      default:
+        dbStatus = 'ready';
+    }
+
     const updatedRoom = {
       ...room,
-      status
+      status: dbStatus
     };
 
     onRoomUpdate(updatedRoom);
