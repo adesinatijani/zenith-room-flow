@@ -8,7 +8,6 @@ interface Profile {
   first_name?: string;
   last_name?: string;
   phone?: string;
-  role: string;
   department?: string;
   is_active: boolean;
   created_by?: string;
@@ -16,15 +15,21 @@ interface Profile {
   updated_at: string;
 }
 
+interface UserRole {
+  role: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
+  userRoles: string[];
   loading: boolean;
   signUp: (email: string, password: string, firstName?: string, lastName?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
+  hasRole: (role: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,6 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -62,30 +68,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return null;
       }
       
-      // If no profile exists, create one with default staff role
-      if (!data) {
-        const { data: newProfile, error: createError } = await supabase
-          .from('profiles')
-          .insert([{
-            id: userId,
-            role: 'staff',
-            is_active: true
-          }])
-          .select()
-          .maybeSingle();
-        
-        if (createError) {
-          console.error('Error creating profile:', createError);
-          return null;
-        }
-        
-        return newProfile;
-      }
-      
       return data;
     } catch (error) {
       console.error('Error fetching profile:', error);
       return null;
+    }
+  };
+
+  const fetchUserRoles = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      if (error) {
+        console.error('Error fetching user roles:', error);
+        return [];
+      }
+      
+      return data?.map((r: UserRole) => r.role) || [];
+    } catch (error) {
+      console.error('Error fetching user roles:', error);
+      return [];
     }
   };
 
@@ -97,13 +102,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Defer profile fetching to avoid deadlock
+          // Defer profile and roles fetching to avoid deadlock
           setTimeout(async () => {
-            const profileData = await fetchProfile(session.user.id);
+            const [profileData, roles] = await Promise.all([
+              fetchProfile(session.user.id),
+              fetchUserRoles(session.user.id)
+            ]);
             setProfile(profileData);
+            setUserRoles(roles);
           }, 0);
         } else {
           setProfile(null);
+          setUserRoles([]);
         }
         
         setLoading(false);
@@ -111,12 +121,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchProfile(session.user.id).then(setProfile);
+        const [profileData, roles] = await Promise.all([
+          fetchProfile(session.user.id),
+          fetchUserRoles(session.user.id)
+        ]);
+        setProfile(profileData);
+        setUserRoles(roles);
       }
       setLoading(false);
     });
@@ -195,23 +210,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setSession(null);
     setProfile(null);
+    setUserRoles([]);
     toast({
       title: "Signed out",
       description: "You have been signed out successfully.",
     });
   };
 
-  const isAdmin = profile?.role === 'admin';
+  const hasRole = (role: string) => userRoles.includes(role);
+  const isAdmin = hasRole('admin');
 
   const value = {
     user,
     session,
     profile,
+    userRoles,
     loading,
     signUp,
     signIn,
     signOut,
     isAdmin,
+    hasRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

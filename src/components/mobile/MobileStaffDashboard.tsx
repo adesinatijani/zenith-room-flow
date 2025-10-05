@@ -33,7 +33,7 @@ const notifications = [
 
 export default function MobileStaffDashboard() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, userRoles } = useAuth();
 
   useEffect(() => {
     const handleOnlineStatus = () => setIsOnline(navigator.onLine);
@@ -118,7 +118,7 @@ export default function MobileStaffDashboard() {
                   Welcome, {profile?.first_name || 'Staff'}
                 </h2>
                 <p className="text-sm text-muted-foreground capitalize">
-                  {profile?.role || 'Staff Member'} • {profile?.department || 'General'}
+                  {userRoles[0] || 'Staff Member'} • {profile?.department || 'General'}
                 </p>
               </div>
             </div>

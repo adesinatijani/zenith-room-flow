@@ -69,7 +69,7 @@ export function HotelSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
   const { settings } = useGlobalSettings();
-  const { profile, signOut, isAdmin } = useAuth();
+  const { profile, signOut, isAdmin, userRoles } = useAuth();
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -161,7 +161,7 @@ export function HotelSidebar() {
                         {profile?.first_name} {profile?.last_name}
                       </p>
                       <p className="text-xs text-muted-foreground capitalize">
-                        {profile?.role}
+                        {userRoles[0] || 'Staff'}
                       </p>
                     </div>
                   )}

@@ -87,7 +87,6 @@ export const Header = () => {
                 <span className="hidden md:inline text-sm font-medium">
                   {profile?.first_name && profile?.last_name 
                     ? `${profile.first_name} ${profile.last_name}` 
-                    : profile?.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1) 
                     : 'User'}
                 </span>
               </Button>

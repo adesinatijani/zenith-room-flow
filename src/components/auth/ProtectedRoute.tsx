@@ -12,7 +12,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   requiredRole 
 }) => {
-  const { user, profile, loading } = useAuth();
+  const { user, hasRole, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,12 +22,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         return;
       }
       
-      if (requiredRole && profile?.role !== requiredRole) {
+      if (requiredRole && !hasRole(requiredRole)) {
         navigate('/auth');
         return;
       }
     }
-  }, [user, profile, loading, requiredRole, navigate]);
+  }, [user, hasRole, loading, requiredRole, navigate]);
 
   if (loading) {
     return (
@@ -40,7 +40,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  if (!user || (requiredRole && profile?.role !== requiredRole)) {
+  if (!user || (requiredRole && !hasRole(requiredRole))) {
     return null;
   }
 

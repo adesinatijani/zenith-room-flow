@@ -14,7 +14,7 @@ interface UserProfileModalProps {
 }
 
 export const UserProfileModal = ({ open, onOpenChange }: UserProfileModalProps) => {
-  const { profile, user } = useAuth();
+  const { profile, user, userRoles } = useAuth();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
@@ -134,7 +134,7 @@ export const UserProfileModal = ({ open, onOpenChange }: UserProfileModalProps) 
           <div className="bg-muted p-3 rounded-lg">
             <h4 className="font-medium mb-2">Account Information</h4>
             <div className="text-sm space-y-1">
-              <p>Role: <span className="font-medium capitalize">{profile?.role}</span></p>
+              <p>Role: <span className="font-medium capitalize">{userRoles.join(', ') || 'Staff'}</span></p>
               <p>Status: <span className="text-green-600 font-medium">Active</span></p>
               <p>Member Since: {new Date(profile?.created_at || "").toLocaleDateString()}</p>
             </div>
