@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           account_code: string | null
           created_at: string
+          description: string | null
           id: string
           is_active: boolean
           name: string
@@ -28,6 +29,7 @@ export type Database = {
         Insert: {
           account_code?: string | null
           created_at?: string
+          description?: string | null
           id?: string
           is_active?: boolean
           name: string
@@ -38,6 +40,7 @@ export type Database = {
         Update: {
           account_code?: string | null
           created_at?: string
+          description?: string | null
           id?: string
           is_active?: boolean
           name?: string
