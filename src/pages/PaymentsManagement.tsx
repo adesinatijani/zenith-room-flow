@@ -9,6 +9,8 @@ import { PaymentDetailsModal } from "@/components/payment/PaymentDetailsModal";
 import { PrintReceiptModal } from "@/components/payment/PrintReceiptModal";
 import { ReconciliationReportModal } from "@/components/payment/ReconciliationReportModal";
 import { BankStatementUploadModal } from "@/components/payment/BankStatementUploadModal";
+import { usePayments, usePaymentSummary, Payment } from "@/hooks/usePayments";
+import { Loader2 } from "lucide-react";
 import {
   CreditCard,
   Search,
@@ -21,28 +23,6 @@ import {
   RefreshCw
 } from "lucide-react";
 
-interface Payment {
-  id: string;
-  transactionId: string;
-  guestName: string;
-  amount: number;
-  method: 'card' | 'cash' | 'bank' | 'paystack' | 'flutterwave';
-  type: 'booking' | 'pos' | 'service' | 'refund';
-  status: 'completed' | 'pending' | 'failed' | 'refunded';
-  date: string;
-  description: string;
-  roomNumber?: string;
-  reference: string;
-}
-
-interface PaymentSummary {
-  totalRevenue: number;
-  todayRevenue: number;
-  pendingAmount: number;
-  refundedAmount: number;
-  transactionCount: number;
-  avgTransactionValue: number;
-}
 
 const PaymentsManagement = () => {
   const { toast } = useToast();
@@ -56,57 +36,9 @@ const PaymentsManagement = () => {
   const [isBankUploadModalOpen, setIsBankUploadModalOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 
-  const [payments] = useState<Payment[]>([
-    {
-      id: "PAY001",
-      transactionId: "TXN_20240115_001",
-      guestName: "John Smith",
-      amount: 1200.00,
-      method: 'card',
-      type: 'booking',
-      status: 'completed',
-      date: "2024-01-15 14:30",
-      description: "Room booking payment - Deluxe Suite",
-      roomNumber: "305",
-      reference: "REF_BK001"
-    },
-    {
-      id: "PAY002", 
-      transactionId: "TXN_20240115_002",
-      guestName: "Maria Garcia",
-      amount: 85.50,
-      method: 'paystack',
-      type: 'pos',
-      status: 'completed',
-      date: "2024-01-15 16:45",
-      description: "Restaurant bill payment",
-      reference: "REF_POS002"
-    },
-    {
-      id: "PAY003",
-      transactionId: "TXN_20240115_003", 
-      guestName: "David Johnson",
-      amount: 450.00,
-      method: 'bank',
-      type: 'service',
-      status: 'pending',
-      date: "2024-01-15 18:20",
-      description: "Spa services payment",
-      reference: "REF_SPA001"
-    },
-    {
-      id: "PAY004",
-      transactionId: "TXN_20240114_025",
-      guestName: "Sarah Wilson",
-      amount: -200.00,
-      method: 'card',
-      type: 'refund',
-      status: 'refunded',
-      date: "2024-01-14 11:15",
-      description: "Booking cancellation refund",
-      reference: "REF_REF001"
-    }
-  ]);
+  // Fetch real payments data from all sources
+  const { data: payments = [], isLoading: paymentsLoading } = usePayments();
+  const { data: summary, isLoading: summaryLoading } = usePaymentSummary();
 
   const filteredPayments = payments.filter(payment =>
     payment.guestName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -114,21 +46,13 @@ const PaymentsManagement = () => {
     payment.reference.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getPaymentSummary = (): PaymentSummary => {
-    const completed = payments.filter(p => p.status === 'completed');
-    const today = payments.filter(p => p.date.startsWith('2024-01-15'));
-    
-    return {
-      totalRevenue: completed.reduce((sum, p) => sum + (p.amount > 0 ? p.amount : 0), 0),
-      todayRevenue: today.reduce((sum, p) => sum + (p.amount > 0 ? p.amount : 0), 0),
-      pendingAmount: payments.filter(p => p.status === 'pending').reduce((sum, p) => sum + p.amount, 0),
-      refundedAmount: Math.abs(payments.filter(p => p.type === 'refund').reduce((sum, p) => sum + p.amount, 0)),
-      transactionCount: payments.length,
-      avgTransactionValue: completed.length > 0 ? completed.reduce((sum, p) => sum + Math.abs(p.amount), 0) / completed.length : 0
-    };
-  };
-
-  const summary = getPaymentSummary();
+  if (paymentsLoading || summaryLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   const getMethodBadge = (method: string) => {
     const colors = {
@@ -374,10 +298,10 @@ ${payments.map(p =>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${summary.totalRevenue.toFixed(2)}</div>
+                <div className="text-2xl font-bold">${summary?.totalRevenue.toFixed(2) || '0.00'}</div>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" />
-                  +15.2% from last month
+                  All-time revenue
                 </p>
               </CardContent>
             </Card>
@@ -389,9 +313,9 @@ ${payments.map(p =>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${summary.todayRevenue.toFixed(2)}</div>
+                <div className="text-2xl font-bold">${summary?.todayRevenue.toFixed(2) || '0.00'}</div>
                 <p className="text-xs text-muted-foreground">
-                  From {payments.filter(p => p.date.startsWith('2024-01-15')).length} transactions
+                  From today's transactions
                 </p>
               </CardContent>
             </Card>
@@ -399,13 +323,13 @@ ${payments.map(p =>
             <Card className="card-luxury">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Pending Payments
+                  Transaction Count
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${summary.pendingAmount.toFixed(2)}</div>
+                <div className="text-2xl font-bold">{summary?.transactionCount || 0}</div>
                 <p className="text-xs text-muted-foreground">
-                  Awaiting confirmation
+                  Total transactions
                 </p>
               </CardContent>
             </Card>
@@ -444,15 +368,15 @@ ${payments.map(p =>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Total Transactions</span>
-                  <span className="font-bold">{summary.transactionCount}</span>
+                  <span className="font-bold">{summary?.transactionCount || 0}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Average Transaction</span>
-                  <span className="font-bold">${summary.avgTransactionValue.toFixed(2)}</span>
+                  <span className="font-bold">${summary?.avgTransactionValue.toFixed(2) || '0.00'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Total Refunded</span>
-                  <span className="font-bold text-destructive">${summary.refundedAmount.toFixed(2)}</span>
+                  <span className="font-bold text-destructive">${summary?.refundedAmount.toFixed(2) || '0.00'}</span>
                 </div>
               </CardContent>
             </Card>

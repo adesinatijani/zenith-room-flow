@@ -133,7 +133,7 @@ export const useHallsDB = () => {
   };
 
   const createBooking = async (bookingData: Omit<HallBooking, "id" | "created_at" | "updated_at">) => {
-    const { error } = await supabase.from("hall_bookings").insert([bookingData]);
+    const { data, error } = await supabase.from("hall_bookings").insert([bookingData]).select().single();
 
     if (error) {
       toast({
@@ -146,6 +146,22 @@ export const useHallsDB = () => {
 
     // Update hall availability
     await updateHall(bookingData.hall_id, { availability: 'booked' });
+
+    // If confirmed, create accounting entry
+    if (data && bookingData.status === 'confirmed') {
+      const { createAccountingEntryForPayment } = await import('@/utils/accountingIntegration');
+      const hall = halls.find(h => h.id === bookingData.hall_id);
+      
+      await createAccountingEntryForPayment({
+        amount: bookingData.total_amount,
+        description: `Hall booking payment - ${bookingData.event_name} at ${hall?.name || 'Hall'}`,
+        source_type: 'hall_booking',
+        source_id: data.id,
+        reference_number: `HB-${data.id.slice(0, 8)}`,
+        payment_method: 'bank',
+        guest_name: bookingData.organizer_name,
+      });
+    }
 
     toast({ title: "Hall booked successfully" });
   };

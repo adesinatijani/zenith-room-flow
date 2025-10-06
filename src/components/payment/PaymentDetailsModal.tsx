@@ -23,7 +23,7 @@ interface Payment {
   amount: number;
   method: 'card' | 'cash' | 'bank' | 'paystack' | 'flutterwave';
   type: 'booking' | 'pos' | 'service' | 'refund';
-  status: 'completed' | 'pending' | 'failed' | 'refunded';
+  status: 'completed' | 'pending' | 'failed' | 'refunded' | 'active' | 'cancelled';
   date: string;
   description: string;
   roomNumber?: string;

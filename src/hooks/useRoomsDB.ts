@@ -132,6 +132,20 @@ export const useRoomsDB = () => {
       
       if (error) throw error;
       
+      // Create accounting entry for room booking payment
+      const room = rooms.find(r => r.id === bookingData.room_id);
+      const { createAccountingEntryForPayment } = await import('@/utils/accountingIntegration');
+      
+      await createAccountingEntryForPayment({
+        amount: bookingData.total_amount,
+        description: `Room booking payment - ${room?.room_type || 'Room'} ${room?.room_number || ''}`,
+        source_type: 'room_booking',
+        source_id: data.id,
+        reference_number: `RB-${data.id.slice(0, 8)}`,
+        payment_method: 'card',
+        guest_name: bookingData.guest_name,
+      });
+      
       // Refresh data
       await Promise.all([fetchRooms(), fetchBookings()]);
       

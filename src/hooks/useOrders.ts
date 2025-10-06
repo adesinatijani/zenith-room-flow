@@ -271,6 +271,9 @@ export const useOrders = () => {
 
   const processPayment = async (orderId: string, paymentMethod: string) => {
     try {
+      // Get order details for accounting
+      const order = orders.find(o => o.id === orderId);
+      
       // Update order status and payment method
       const { error: orderError } = await supabase
         .from('orders')
@@ -281,6 +284,21 @@ export const useOrders = () => {
         .eq('id', orderId);
 
       if (orderError) throw orderError;
+
+      // Create accounting entry for POS payment
+      if (order) {
+        const { createAccountingEntryForPayment } = await import('@/utils/accountingIntegration');
+        
+        await createAccountingEntryForPayment({
+          amount: order.total_amount,
+          description: `POS order payment - ${order.guest_name}`,
+          source_type: 'pos_order',
+          source_id: orderId,
+          reference_number: `POS-${orderId.slice(0, 8)}`,
+          payment_method: paymentMethod,
+          guest_name: order.guest_name,
+        });
+      }
 
       // Send kitchen orders for items that need preparation
       await sendKitchenOrder(orderId);
