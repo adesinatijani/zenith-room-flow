@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AddMenuItemModalProps {
   isOpen: boolean;
@@ -16,32 +17,64 @@ interface AddMenuItemModalProps {
   allergens: string[];
 }
 
+interface InventoryItem {
+  id: string;
+  item_name: string;
+  category: string;
+  current_quantity: number;
+  unit: string;
+}
+
 const AddMenuItemModal = ({ isOpen, onClose, onAdd, categories, allergens }: AddMenuItemModalProps) => {
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     price: 0,
+    cost_price: 0,
     description: "",
     category: categories[0] || "Main Course",
     preparation_time: 15,
     calories: undefined as number | undefined,
     is_popular: false,
     is_available: true,
+    tracks_inventory: false,
+    inventory_item_id: "",
     allergens: [] as string[],
     ingredients: [] as string[]
   });
 
+  useEffect(() => {
+    if (isOpen) {
+      fetchInventoryItems();
+    }
+  }, [isOpen]);
+
+  const fetchInventoryItems = async () => {
+    const { data } = await supabase
+      .from('inventory')
+      .select('id, item_name, category, current_quantity, unit')
+      .order('item_name');
+    if (data) setInventoryItems(data);
+  };
+
   const handleSave = async () => {
     try {
-      await onAdd(formData);
+      await onAdd({
+        ...formData,
+        inventory_item_id: formData.tracks_inventory && formData.inventory_item_id ? formData.inventory_item_id : null
+      });
       setFormData({
         name: "",
         price: 0,
+        cost_price: 0,
         description: "",
         category: categories[0] || "Main Course",
         preparation_time: 15,
         calories: undefined,
         is_popular: false,
         is_available: true,
+        tracks_inventory: false,
+        inventory_item_id: "",
         allergens: [],
         ingredients: []
       });
@@ -50,6 +83,10 @@ const AddMenuItemModal = ({ isOpen, onClose, onAdd, categories, allergens }: Add
       console.error("Error adding menu item:", error);
     }
   };
+
+  const profitMargin = formData.price && formData.cost_price 
+    ? ((formData.price - formData.cost_price) / formData.price * 100).toFixed(1)
+    : "0";
 
   const toggleAllergen = (allergen: string) => {
     setFormData(prev => ({
@@ -76,17 +113,18 @@ const AddMenuItemModal = ({ isOpen, onClose, onAdd, categories, allergens }: Add
           </TabsList>
 
           <TabsContent value="basic" className="space-y-4">
+            <div className="space-y-2">
+              <Label>Item Name</Label>
+              <Input 
+                placeholder="Enter item name"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Item Name</Label>
-                <Input 
-                  placeholder="Enter item name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Price</Label>
+                <Label>Selling Price ($)</Label>
                 <Input 
                   type="number" 
                   step="0.01" 
@@ -95,7 +133,28 @@ const AddMenuItemModal = ({ isOpen, onClose, onAdd, categories, allergens }: Add
                   onChange={(e) => setFormData({...formData, price: parseFloat(e.target.value) || 0})}
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Cost Price ($)</Label>
+                <Input 
+                  type="number" 
+                  step="0.01" 
+                  placeholder="0.00"
+                  value={formData.cost_price}
+                  onChange={(e) => setFormData({...formData, cost_price: parseFloat(e.target.value) || 0})}
+                />
+              </div>
             </div>
+
+            {formData.price > 0 && formData.cost_price > 0 && (
+              <div className="bg-muted p-3 rounded-lg">
+                <p className="text-sm">
+                  <span className="font-medium">Profit Margin:</span> {profitMargin}%
+                  <span className="ml-2 text-muted-foreground">
+                    (${(formData.price - formData.cost_price).toFixed(2)} profit per item)
+                  </span>
+                </p>
+              </div>
+            )}
             
             <div className="space-y-2">
               <Label>Description</Label>
@@ -138,6 +197,15 @@ const AddMenuItemModal = ({ isOpen, onClose, onAdd, categories, allergens }: Add
           <TabsContent value="details" className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label>Prep Time (min)</Label>
+                <Input 
+                  type="number" 
+                  placeholder="15"
+                  value={formData.preparation_time}
+                  onChange={(e) => setFormData({...formData, preparation_time: parseInt(e.target.value) || 15})}
+                />
+              </div>
+              <div className="space-y-2">
                 <Label>Calories (optional)</Label>
                 <Input 
                   type="number" 
@@ -155,6 +223,45 @@ const AddMenuItemModal = ({ isOpen, onClose, onAdd, categories, allergens }: Add
                 value={formData.ingredients.join(", ")}
                 onChange={(e) => setFormData({...formData, ingredients: e.target.value.split(",").map(i => i.trim())})}
               />
+            </div>
+
+            <div className="space-y-3 border-t pt-4 mt-4">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="tracks_inventory">Track Inventory</Label>
+                <Switch 
+                  id="tracks_inventory"
+                  checked={formData.tracks_inventory}
+                  onCheckedChange={(checked) => setFormData({
+                    ...formData,
+                    tracks_inventory: checked,
+                    inventory_item_id: checked ? formData.inventory_item_id : ""
+                  })}
+                />
+              </div>
+
+              {formData.tracks_inventory && (
+                <div className="space-y-2">
+                  <Label>Link to Inventory Item</Label>
+                  <Select 
+                    value={formData.inventory_item_id}
+                    onValueChange={(value) => setFormData({...formData, inventory_item_id: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select inventory item" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {inventoryItems.map(item => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.item_name} ({item.current_quantity} {item.unit})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    When this item is sold in POS, it will deduct from inventory
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center space-x-2">

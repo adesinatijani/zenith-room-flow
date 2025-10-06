@@ -396,37 +396,42 @@ ${payments.map(p =>
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <h4 className="font-semibold">System Records</h4>
+                  <h4 className="font-semibold">System Records (Today)</h4>
                   <div className="bg-muted/30 p-4 rounded-lg">
-                    <div className="flex justify-between mb-2">
-                      <span>Card Payments</span>
-                      <span className="font-bold">$1,200.00</span>
-                    </div>
-                    <div className="flex justify-between mb-2">
-                      <span>Bank Transfers</span>
-                      <span className="font-bold">$450.00</span>
-                    </div>
-                    <div className="flex justify-between mb-2">
-                      <span>Digital Payments</span>
-                      <span className="font-bold">$85.50</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-lg border-t pt-2">
+                    {['card', 'cash', 'bank', 'paystack', 'flutterwave'].map(method => {
+                      const todayPayments = payments.filter(p => {
+                        const paymentDate = new Date(p.date);
+                        const today = new Date();
+                        return p.method === method && 
+                               paymentDate.toDateString() === today.toDateString() &&
+                               p.status === 'completed';
+                      });
+                      const methodTotal = todayPayments.reduce((sum, p) => sum + p.amount, 0);
+                      
+                      return methodTotal > 0 ? (
+                        <div key={method} className="flex justify-between mb-2">
+                          <span className="capitalize">{method} Payments</span>
+                          <span className="font-bold">{formatCurrency(methodTotal)}</span>
+                        </div>
+                      ) : null;
+                    })}
+                    <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2">
                       <span>Total</span>
-                      <span>$1,735.50</span>
+                      <span>{formatCurrency(summary?.todayRevenue || 0)}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="font-semibold">Bank Statement</h4>
+                  <h4 className="font-semibold">All Time Summary</h4>
                   <div className="bg-success/10 p-4 rounded-lg">
                     <div className="flex justify-between mb-2">
-                      <span>Card Settlements</span>
-                      <span className="font-bold">$1,200.00</span>
+                      <span>Total Revenue</span>
+                      <span className="font-bold">{formatCurrency(summary?.totalRevenue || 0)}</span>
                     </div>
                     <div className="flex justify-between mb-2">
-                      <span>Bank Transfers</span>
-                      <span className="font-bold">$450.00</span>
+                      <span>Transactions</span>
+                      <span className="font-bold">{summary?.transactionCount || 0}</span>
                     </div>
                     <div className="flex justify-between mb-2">
                       <span>Gateway Settlements</span>

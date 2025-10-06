@@ -68,14 +68,30 @@ const MenuManagement = () => {
     "Gluten", "Dairy", "Nuts", "Shellfish", "Eggs", "Soy", "Fish"
   ];
 
-  const filteredItems = menuItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  // Separate kitchen items from drinks
+  const drinkCategories = ['soft_drinks', 'beer', 'liquor', 'wine', 'juice', 'water', 'energy_drinks', 'cocktails', 'spirits', 'drinks'];
+  
+  const kitchenItems = menuItems.filter(item => !drinkCategories.includes(item.category.toLowerCase()));
+  const drinkItems = menuItems.filter(item => drinkCategories.includes(item.category.toLowerCase()));
 
-  const MenuItemCard = ({ item }: { item: MenuItem }) => (
+  const filterItems = (items: typeof menuItems) => {
+    return items.filter((item) => {
+      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  };
+
+  const filteredKitchenItems = filterItems(kitchenItems);
+  const filteredDrinkItems = filterItems(drinkItems);
+
+  const MenuItemCard = ({ item, isDrink = false }: { item: MenuItem; isDrink?: boolean }) => {
+    const profitMargin = item.cost_price && item.price 
+      ? ((item.price - item.cost_price) / item.price * 100).toFixed(1)
+      : null;
+
+    return (
     <Card className={`card-luxury ${!item.is_available ? 'opacity-60' : ''}`}>
       <CardHeader>
         <div className="flex items-start justify-between">
@@ -114,8 +130,25 @@ const MenuManagement = () => {
       <CardContent>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold text-accent">
-              {formatCurrency(item.price)}
+            <div>
+              {isDrink && item.tracks_inventory && (
+                <>
+                  <div className="text-sm text-muted-foreground">Cost: {formatCurrency(item.cost_price || 0)}</div>
+                  <div className="text-2xl font-bold text-accent">
+                    {formatCurrency(item.price)}
+                  </div>
+                  {profitMargin && (
+                    <div className="text-xs text-green-600 font-semibold">
+                      {profitMargin}% profit
+                    </div>
+                  )}
+                </>
+              )}
+              {!isDrink && (
+                <div className="text-2xl font-bold text-accent">
+                  {formatCurrency(item.price)}
+                </div>
+              )}
             </div>
             <div className="flex gap-2">
               <Badge variant="secondary">{item.category}</Badge>
@@ -167,7 +200,8 @@ const MenuManagement = () => {
         </div>
       </CardContent>
     </Card>
-  );
+    );
+  };
 
   return (
     <div className="p-6 space-y-8">
@@ -237,14 +271,25 @@ const MenuManagement = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card className="card-luxury">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <Menu className="h-8 w-8 text-accent" />
               <div>
-                <p className="text-2xl font-bold">{menuItems.length}</p>
-                <p className="text-sm text-muted-foreground">Total Items</p>
+                <p className="text-2xl font-bold">{kitchenItems.length}</p>
+                <p className="text-sm text-muted-foreground">Kitchen Items</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="card-luxury">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <TrendingUp className="h-8 w-8 text-blue-600" />
+              <div>
+                <p className="text-2xl font-bold">{drinkItems.length}</p>
+                <p className="text-sm text-muted-foreground">Drinks</p>
               </div>
             </div>
           </CardContent>
@@ -286,20 +331,41 @@ const MenuManagement = () => {
         </Card>
       </div>
 
-      {/* Menu Items Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredItems.map((item) => (
-          <MenuItemCard key={item.id} item={item} />
-        ))}
+      {/* Kitchen Items Section */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <h2 className="text-2xl font-semibold">🍳 Kitchen Items</h2>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {filteredKitchenItems.map((item) => (
+            <MenuItemCard key={item.id} item={item} isDrink={false} />
+          ))}
+        </div>
+        {filteredKitchenItems.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No kitchen items found</p>
+          </div>
+        )}
       </div>
 
-      {filteredItems.length === 0 && (
-        <div className="text-center py-12">
-          <Menu className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">No menu items found</h3>
-          <p className="text-muted-foreground">Try adjusting your search or add a new menu item</p>
+      {/* Drinks Section */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <h2 className="text-2xl font-semibold">🍹 Drinks</h2>
         </div>
-      )}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {filteredDrinkItems.map((item) => (
+            <MenuItemCard key={item.id} item={item} isDrink={true} />
+          ))}
+        </div>
+        {filteredDrinkItems.length === 0 && (
+          <div className="text-center py-12 bg-muted/30 rounded-lg p-8">
+            <TrendingUp className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">No drinks found</h3>
+            <p className="text-muted-foreground">Add drinks in Inventory Management to automatically create menu items here</p>
+          </div>
+        )}
+      </div>
 
       {/* Modals */}
       <AddMenuItemModal

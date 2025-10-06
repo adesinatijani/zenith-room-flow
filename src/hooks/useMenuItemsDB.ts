@@ -7,11 +7,14 @@ export interface MenuItem {
   name: string;
   description?: string;
   price: number;
+  cost_price?: number;
   category: string;
   preparation_time: number;
   calories?: number;
   is_popular: boolean;
   is_available: boolean;
+  tracks_inventory?: boolean;
+  inventory_item_id?: string;
   allergens: string[];
   ingredients: string[];
   image_url?: string;

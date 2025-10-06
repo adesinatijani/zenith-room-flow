@@ -146,7 +146,8 @@ const POSSystem = () => {
     { id: "all", name: "ALL SERVICES", color: "bg-gray-500" },
     { id: "accommodation", name: "ACCOMMODATION", color: "bg-blue-600" },
     { id: "facilities", name: "FACILITIES", color: "bg-green-600" },
-    { id: "amenities", name: "AMENITIES", color: "bg-purple-600" },
+    { id: "food", name: "FOOD", color: "bg-orange-500" },
+    { id: "drinks", name: "DRINKS", color: "bg-amber-600" },
     { id: "booking", name: "BOOKING", color: "bg-orange-600" },
   ];
 
@@ -180,29 +181,42 @@ const POSSystem = () => {
         amenities: hall.amenities
       }));
 
-    // Add menu items from restaurant menu
+    // Add menu items from restaurant menu - ONLY items from Menu Management
     const menuItemsList: POSItem[] = menuItems
       .filter(item => item.is_available)
-      .map(item => ({
-        id: `menu-${item.id}`,
-        name: item.name.toUpperCase(),
-        price: item.price,
-        category: item.category === 'main' || item.category === 'appetizer' || item.category === 'dessert' 
-          ? 'amenities' 
-          : item.category,
-        color: "bg-orange-500",
-        isAvailable: item.is_available
-      }));
+      .map(item => {
+        // Categorize drinks
+        let category = 'amenities';
+        let color = 'bg-orange-500';
+        
+        const lowerCategory = item.category?.toLowerCase() || '';
+        if (lowerCategory.includes('beer') || lowerCategory.includes('wine') || 
+            lowerCategory.includes('cocktail') || lowerCategory.includes('spirit') || 
+            lowerCategory.includes('beverage')) {
+          category = 'drinks';
+          color = 'bg-amber-600';
+        } else if (lowerCategory.includes('main') || lowerCategory.includes('appetizer') || 
+                   lowerCategory.includes('dessert') || lowerCategory.includes('side') || 
+                   lowerCategory.includes('salad') || lowerCategory.includes('soup')) {
+          category = 'food';
+          color = 'bg-orange-500';
+        }
+        
+        return {
+          id: `menu-${item.id}`,
+          name: item.name.toUpperCase(),
+          price: item.price,
+          category: category,
+          color: color,
+          isAvailable: item.is_available
+        };
+      });
 
-    const baseItems: POSItem[] = [
-      { id: "gym", name: "GYM", price: 25.00, category: "facilities", color: "bg-green-500", isAvailable: true },
-      { id: "game-center", name: "GAME CENTER", price: 15.00, category: "facilities", color: "bg-green-700", isAvailable: true },
-      { id: "extra-towel", name: "EXTRA TOWEL", price: 5.00, category: "amenities", color: "bg-purple-600", isAvailable: true },
-      { id: "laundry", name: "LAUNDRY", price: 20.00, category: "amenities", color: "bg-purple-500", isAvailable: true },
+    const bookingItem: POSItem[] = [
       { id: "booking-page", name: "MAKE BOOKING", price: 0, category: "booking", color: "bg-orange-600", isAvailable: true },
     ];
 
-    return [...roomItems, ...hallItems, ...menuItemsList, ...baseItems];
+    return [...roomItems, ...hallItems, ...menuItemsList, ...bookingItem];
   };
 
   const [items, setItems] = useState<POSItem[]>([]);
@@ -340,6 +354,40 @@ const POSSystem = () => {
           .insert(orderItems);
 
         if (itemsError) throw itemsError;
+
+        // Deduct inventory for menu items with inventory tracking
+        for (const item of currentGuest.items) {
+          if (item.id.startsWith('menu-')) {
+            const menuItemId = item.id.replace('menu-', '');
+            
+            // Get menu item to check if it tracks inventory
+            const { data: menuItem } = await supabase
+              .from('menu_items')
+              .select('tracks_inventory, inventory_item_id')
+              .eq('id', menuItemId)
+              .single();
+            
+            if (menuItem?.tracks_inventory && menuItem.inventory_item_id) {
+              // Deduct from inventory
+              const { data: inventoryItem } = await supabase
+                .from('inventory')
+                .select('current_quantity')
+                .eq('id', menuItem.inventory_item_id)
+                .single();
+              
+              if (inventoryItem) {
+                const newQuantity = Math.max(0, inventoryItem.current_quantity - item.quantity);
+                await supabase
+                  .from('inventory')
+                  .update({ 
+                    current_quantity: newQuantity,
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', menuItem.inventory_item_id);
+              }
+            }
+          }
+        }
 
         // Create accounting entry for POS sale
         await createAccountingEntryForPayment({

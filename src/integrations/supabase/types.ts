@@ -1256,51 +1256,68 @@ export type Database = {
           allergens: string[] | null
           calories: number | null
           category: string
+          cost_price: number | null
           created_at: string
           description: string | null
           id: string
           image_url: string | null
           ingredients: string[] | null
+          inventory_item_id: string | null
           is_available: boolean | null
           is_popular: boolean | null
           name: string
           preparation_time: number | null
           price: number
+          tracks_inventory: boolean | null
           updated_at: string
         }
         Insert: {
           allergens?: string[] | null
           calories?: number | null
           category: string
+          cost_price?: number | null
           created_at?: string
           description?: string | null
           id?: string
           image_url?: string | null
           ingredients?: string[] | null
+          inventory_item_id?: string | null
           is_available?: boolean | null
           is_popular?: boolean | null
           name: string
           preparation_time?: number | null
           price?: number
+          tracks_inventory?: boolean | null
           updated_at?: string
         }
         Update: {
           allergens?: string[] | null
           calories?: number | null
           category?: string
+          cost_price?: number | null
           created_at?: string
           description?: string | null
           id?: string
           image_url?: string | null
           ingredients?: string[] | null
+          inventory_item_id?: string | null
           is_available?: boolean | null
           is_popular?: boolean | null
           name?: string
           preparation_time?: number | null
           price?: number
+          tracks_inventory?: boolean | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "menu_items_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_items: {
         Row: {
