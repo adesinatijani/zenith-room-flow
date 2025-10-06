@@ -37,6 +37,9 @@ import { useGuests, RegisteredGuest } from "@/hooks/useGuests";
 import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import { TableManagementModal } from "@/components/pos/TableManagementModal";
 import { AdminPOSSettings } from "@/components/pos/AdminPOSSettings";
+import { useMenuItemsDB } from "@/hooks/useMenuItemsDB";
+import { supabase } from "@/integrations/supabase/client";
+import { createAccountingEntryForPayment } from "@/utils/accountingIntegration";
 
 interface POSItem {
   id: string;
@@ -73,6 +76,7 @@ const POSSystem = () => {
   const { halls, getAvailableHalls } = useHalls();
   const { guests: registeredGuests, getAvailableGuests } = useGuests();
   const { tables } = useRestaurantTables();
+  const { menuItems } = useMenuItemsDB();
   
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedGuest, setSelectedGuest] = useState("1");
@@ -146,7 +150,7 @@ const POSSystem = () => {
     { id: "booking", name: "BOOKING", color: "bg-orange-600" },
   ];
 
-  // Generate hotel service items from rooms and halls
+  // Generate hotel service items from rooms, halls, and menu items
   const generateHotelItems = () => {
     const roomItems: POSItem[] = rooms
       .filter(room => room.status === "available")
@@ -176,6 +180,20 @@ const POSSystem = () => {
         amenities: hall.amenities
       }));
 
+    // Add menu items from restaurant menu
+    const menuItemsList: POSItem[] = menuItems
+      .filter(item => item.is_available)
+      .map(item => ({
+        id: `menu-${item.id}`,
+        name: item.name.toUpperCase(),
+        price: item.price,
+        category: item.category === 'main' || item.category === 'appetizer' || item.category === 'dessert' 
+          ? 'amenities' 
+          : item.category,
+        color: "bg-orange-500",
+        isAvailable: item.is_available
+      }));
+
     const baseItems: POSItem[] = [
       { id: "gym", name: "GYM", price: 25.00, category: "facilities", color: "bg-green-500", isAvailable: true },
       { id: "game-center", name: "GAME CENTER", price: 15.00, category: "facilities", color: "bg-green-700", isAvailable: true },
@@ -184,15 +202,15 @@ const POSSystem = () => {
       { id: "booking-page", name: "MAKE BOOKING", price: 0, category: "booking", color: "bg-orange-600", isAvailable: true },
     ];
 
-    return [...roomItems, ...hallItems, ...baseItems];
+    return [...roomItems, ...hallItems, ...menuItemsList, ...baseItems];
   };
 
   const [items, setItems] = useState<POSItem[]>([]);
   
-  // Update items when rooms or halls change
+  // Update items when rooms, halls, or menu items change
   useEffect(() => {
     setItems(generateHotelItems());
-  }, [rooms, halls]);
+  }, [rooms, halls, menuItems]);
 
   const filteredItems = activeCategory === "all" 
     ? items 
@@ -283,13 +301,69 @@ const POSSystem = () => {
     setTimeout(async () => {
       setPaymentState(prev => ({ ...prev, processing: false, completed: true }));
       
-      const total = getGuestTotal(currentGuest) + getTotalTax(getGuestTotal(currentGuest));
+      const subtotal = getGuestTotal(currentGuest);
+      const tax = getTotalTax(subtotal);
+      const total = subtotal + tax;
       const currency = method === "MOBILE_MONEY" || method === "BANK" ? "₦" : "$";
       
-      toast({
-        title: "Payment Successful",
-        description: `Payment of ${currency}${total.toFixed(2)} processed via ${method}`,
-      });
+      // Save order to database
+      try {
+        const { data: order, error: orderError } = await supabase
+          .from('orders')
+          .insert({
+            guest_name: currentGuest.name,
+            guest_type: 'walk-in',
+            room_number: currentGuest.table || null,
+            status: 'paid',
+            subtotal: subtotal,
+            tax_amount: tax,
+            total_amount: total,
+            payment_method: method.toLowerCase()
+          })
+          .select()
+          .single();
+
+        if (orderError) throw orderError;
+
+        // Save order items
+        const orderItems = currentGuest.items.map(item => ({
+          order_id: order.id,
+          item_name: item.name,
+          item_category: item.category,
+          price: item.price,
+          quantity: item.quantity,
+          status: 'completed'
+        }));
+
+        const { error: itemsError } = await supabase
+          .from('order_items')
+          .insert(orderItems);
+
+        if (itemsError) throw itemsError;
+
+        // Create accounting entry for POS sale
+        await createAccountingEntryForPayment({
+          amount: total,
+          description: `POS Sale - ${currentGuest.name}`,
+          source_type: 'pos_order',
+          source_id: order.id,
+          reference_number: `POS-${order.id.slice(0, 8)}`,
+          payment_method: method,
+          guest_name: currentGuest.name
+        });
+
+        toast({
+          title: "Payment Successful",
+          description: `Payment of ${currency}${total.toFixed(2)} processed via ${method}`,
+        });
+      } catch (error) {
+        console.error('Failed to save order:', error);
+        toast({
+          title: "Warning",
+          description: "Payment processed but order not saved to records",
+          variant: "destructive"
+        });
+      }
       
       // Process room check-ins for accommodation items
       const roomItems = currentGuest.items.filter(item => item.category === "accommodation");
@@ -298,7 +372,7 @@ const POSSystem = () => {
         if (roomItem.id.startsWith('room-')) {
           const roomId = roomItem.id.replace('room-', '');
           const checkOutDate = new Date();
-          checkOutDate.setDate(checkOutDate.getDate() + roomItem.quantity); // Add nights
+          checkOutDate.setDate(checkOutDate.getDate() + roomItem.quantity);
           
           try {
             await createRoomBooking({

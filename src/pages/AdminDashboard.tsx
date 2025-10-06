@@ -38,7 +38,7 @@ const AdminDashboard = () => {
       const { data, error } = await supabase
         .from('orders')
         .select('*')
-        .eq('status', 'completed');
+        .eq('status', 'paid');
       if (error) throw error;
       return data;
     }
@@ -65,7 +65,7 @@ const AdminDashboard = () => {
       {
         title: "Total Revenue",
         value: formatCurrency(totalRevenue),
-        change: "+12.5%",
+        change: totalRevenue > 0 ? `${bookings?.length || 0} bookings` : "No sales yet",
         icon: DollarSign,
         color: "text-green-600",
         bg: "bg-green-100"
@@ -73,7 +73,7 @@ const AdminDashboard = () => {
       {
         title: "Active Bookings",
         value: activeBookings.toString(),
-        change: "+8.2%",
+        change: `${bookings?.length || 0} total bookings`,
         icon: Calendar,
         color: "text-blue-600",
         bg: "bg-blue-100"
@@ -81,7 +81,7 @@ const AdminDashboard = () => {
       {
         title: "Occupied Rooms",
         value: `${occupiedRooms}/${totalRooms}`,
-        change: `${occupancyRate}%`,
+        change: `${occupancyRate}% occupancy`,
         icon: Hotel,
         color: "text-purple-600",
         bg: "bg-purple-100"
@@ -89,7 +89,7 @@ const AdminDashboard = () => {
       {
         title: "POS Sales",
         value: formatCurrency(posSales),
-        change: "+15.3%",
+        change: `${orders?.length || 0} orders`,
         icon: ShoppingCart,
         color: "text-orange-600",
         bg: "bg-orange-100"
@@ -186,9 +186,8 @@ const AdminDashboard = () => {
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
                     <p className="text-2xl font-bold">{stat.value}</p>
-                    <p className={`text-sm ${stat.color} flex items-center gap-1 mt-1`}>
-                      <TrendingUp className="h-3 w-3" />
-                      {stat.change} from last month
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {stat.change}
                     </p>
                   </div>
                   <div className={`p-3 rounded-full ${stat.bg}`}>
