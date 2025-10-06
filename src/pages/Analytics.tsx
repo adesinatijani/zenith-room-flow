@@ -19,11 +19,13 @@ import { useRoomsDB } from "@/hooks/useRoomsDB";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemo } from "react";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 
 const Analytics = () => {
   const { data: financialSummary } = useFinancialSummary();
   const { data: accountEntries } = useAccountEntries();
   const { rooms, bookings } = useRoomsDB();
+  const { formatCurrency } = useGlobalSettings();
   
   // Fetch orders for restaurant revenue
   const { data: orders } = useQuery({
@@ -132,7 +134,7 @@ const Analytics = () => {
     return [
       {
         title: "Total Revenue",
-        value: `$${combinedRevenue.toLocaleString()}`,
+        value: formatCurrency(combinedRevenue),
         change: "+15.3%",
         icon: DollarSign,
         trend: "up"
@@ -146,20 +148,20 @@ const Analytics = () => {
       },
       {
         title: "Average Daily Rate",
-        value: `$${adr}`,
+        value: formatCurrency(adr),
         change: "Per night",
         icon: TrendingUp,
         trend: "up"
       },
       {
         title: "Revenue Per Room",
-        value: `$${revpar}`,
+        value: formatCurrency(revpar),
         change: "RevPAR",
         icon: Activity,
         trend: "up"
       }
     ];
-  }, [rooms, bookings, orders]);
+  }, [rooms, bookings, orders, formatCurrency]);
 
   const customerSegmentData = [
     { name: 'Room Bookings', value: 60, color: 'hsl(var(--primary))' },
