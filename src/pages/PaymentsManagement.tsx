@@ -10,6 +10,7 @@ import { PrintReceiptModal } from "@/components/payment/PrintReceiptModal";
 import { ReconciliationReportModal } from "@/components/payment/ReconciliationReportModal";
 import { BankStatementUploadModal } from "@/components/payment/BankStatementUploadModal";
 import { usePayments, usePaymentSummary, Payment } from "@/hooks/usePayments";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import { Loader2 } from "lucide-react";
 import {
   CreditCard,
@@ -26,6 +27,7 @@ import {
 
 const PaymentsManagement = () => {
   const { toast } = useToast();
+  const { formatCurrency } = useGlobalSettings();
   const [activeTab, setActiveTab] = useState("transactions");
   const [searchTerm, setSearchTerm] = useState("");
   
@@ -216,7 +218,7 @@ ${payments.map(p =>
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-accent">
-                          {payment.amount < 0 ? '-' : ''}${Math.abs(payment.amount).toFixed(2)}
+                          {payment.amount < 0 ? '-' : ''}{formatCurrency(Math.abs(payment.amount))}
                         </div>
                         <p className="text-sm text-muted-foreground">{payment.date}</p>
                       </div>
@@ -298,7 +300,7 @@ ${payments.map(p =>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${summary?.totalRevenue.toFixed(2) || '0.00'}</div>
+                <div className="text-2xl font-bold">{formatCurrency(summary?.totalRevenue || 0)}</div>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" />
                   All-time revenue
@@ -313,7 +315,7 @@ ${payments.map(p =>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${summary?.todayRevenue.toFixed(2) || '0.00'}</div>
+                <div className="text-2xl font-bold">{formatCurrency(summary?.todayRevenue || 0)}</div>
                 <p className="text-xs text-muted-foreground">
                   From today's transactions
                 </p>
@@ -372,11 +374,11 @@ ${payments.map(p =>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Average Transaction</span>
-                  <span className="font-bold">${summary?.avgTransactionValue.toFixed(2) || '0.00'}</span>
+                  <span className="font-bold">{formatCurrency(summary?.avgTransactionValue || 0)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Total Refunded</span>
-                  <span className="font-bold text-destructive">${summary?.refundedAmount.toFixed(2) || '0.00'}</span>
+                  <span className="font-bold text-destructive">{formatCurrency(summary?.refundedAmount || 0)}</span>
                 </div>
               </CardContent>
             </Card>

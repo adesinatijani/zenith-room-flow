@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { MenuItem } from '@/hooks/useMenuItems';
+import { useGlobalSettings } from '@/contexts/HotelSettingsContext';
 
 export interface Order {
   id: string;
@@ -36,6 +37,7 @@ export const useOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { settings } = useGlobalSettings();
 
   const fetchOrders = async () => {
     try {
@@ -242,7 +244,8 @@ export const useOrders = () => {
         (total, item) => total + (item.price * item.quantity), 
         0
       );
-      const taxAmount = subtotal * 0.085; // 8.5% tax
+      const taxRate = (settings.tax_rate || 7.5) / 100; // Convert percentage to decimal
+      const taxAmount = subtotal * taxRate;
       const totalAmount = subtotal + taxAmount;
 
       const { error } = await supabase
