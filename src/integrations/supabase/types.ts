@@ -1248,6 +1248,57 @@ export type Database = {
           },
         ]
       }
+      menu_items: {
+        Row: {
+          allergens: string[] | null
+          calories: number | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          ingredients: string[] | null
+          is_available: boolean | null
+          is_popular: boolean | null
+          name: string
+          preparation_time: number | null
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          allergens?: string[] | null
+          calories?: number | null
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          ingredients?: string[] | null
+          is_available?: boolean | null
+          is_popular?: boolean | null
+          name: string
+          preparation_time?: number | null
+          price?: number
+          updated_at?: string
+        }
+        Update: {
+          allergens?: string[] | null
+          calories?: number | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          ingredients?: string[] | null
+          is_available?: boolean | null
+          is_popular?: boolean | null
+          name?: string
+          preparation_time?: number | null
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string

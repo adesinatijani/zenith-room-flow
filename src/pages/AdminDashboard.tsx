@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { 
   BarChart3, 
   TrendingUp, 
@@ -8,7 +9,8 @@ import {
   ShoppingCart,
   Clock,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Settings
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,9 +19,11 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { NetworkStatus } from "@/components/ui/network-status";
 import GlobalInventoryNotifications from "@/components/inventory/GlobalInventoryNotifications";
+import HotelSettingsEditor from "@/components/settings/HotelSettingsEditor";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const stats = [
     {
       title: "Total Revenue",
@@ -79,6 +83,10 @@ const AdminDashboard = () => {
         </div>
         <div className="flex items-center gap-3">
           <NetworkStatus showDetails />
+          <Button variant="outline" onClick={() => setIsSettingsOpen(true)}>
+            <Settings className="h-4 w-4 mr-2" />
+            Hotel Settings
+          </Button>
           <Button variant="outline" onClick={() => navigate('/admin/reports')}>
             <BarChart3 className="h-4 w-4 mr-2" />
             Reports
@@ -245,6 +253,8 @@ const AdminDashboard = () => {
           </div>
         </CardContent>
       </Card>
+      
+      <HotelSettingsEditor isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   );
 };

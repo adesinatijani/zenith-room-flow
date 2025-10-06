@@ -1,23 +1,22 @@
-import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { MenuItem } from "@/hooks/useMenuItems";
+import { MenuItem } from "@/hooks/useMenuItemsDB";
 
 interface DeleteMenuItemModalProps {
   isOpen: boolean;
   onClose: () => void;
   item: MenuItem | null;
+  onDelete: (id: string) => Promise<void>;
 }
 
-const DeleteMenuItemModal = ({ isOpen, onClose, item }: DeleteMenuItemModalProps) => {
-  const { toast } = useToast();
-
-  const handleDelete = () => {
-    toast({
-      title: "Menu item deleted",
-      description: `${item?.name} has been removed from the menu.`,
-      variant: "destructive"
-    });
-    onClose();
+const DeleteMenuItemModal = ({ isOpen, onClose, item, onDelete }: DeleteMenuItemModalProps) => {
+  const handleDelete = async () => {
+    if (!item) return;
+    try {
+      await onDelete(item.id);
+      onClose();
+    } catch (error) {
+      console.error("Error deleting menu item:", error);
+    }
   };
 
   return (

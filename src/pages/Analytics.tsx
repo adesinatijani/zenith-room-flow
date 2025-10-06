@@ -14,60 +14,157 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart as RechartsPieChart, Pie } from 'recharts';
+import { useFinancialSummary, useAccountEntries } from "@/hooks/useAccounting";
+import { useRoomsDB } from "@/hooks/useRoomsDB";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useMemo } from "react";
 
 const Analytics = () => {
-  // Sample data for charts
-  const revenueData = [
-    { month: 'Jan', revenue: 45000, bookings: 120 },
-    { month: 'Feb', revenue: 52000, bookings: 145 },
-    { month: 'Mar', revenue: 48000, bookings: 130 },
-    { month: 'Apr', revenue: 61000, bookings: 165 },
-    { month: 'May', revenue: 55000, bookings: 150 },
-    { month: 'Jun', revenue: 67000, bookings: 180 },
-  ];
+  const { data: financialSummary } = useFinancialSummary();
+  const { data: accountEntries } = useAccountEntries();
+  const { rooms, bookings } = useRoomsDB();
+  
+  // Fetch orders for restaurant revenue
+  const { data: orders } = useQuery({
+    queryKey: ['orders'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('status', 'completed');
+      if (error) throw error;
+      return data;
+    }
+  });
 
-  const roomTypeData = [
-    { type: 'Standard', occupancy: 85, revenue: 25000 },
-    { type: 'Deluxe', occupancy: 92, revenue: 35000 },
-    { type: 'Suite', occupancy: 78, revenue: 45000 },
-    { type: 'Executive', occupancy: 88, revenue: 55000 },
-  ];
+  // Calculate monthly revenue trends
+  const revenueData = useMemo(() => {
+    const last6Months = [];
+    const now = new Date();
+    
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+      const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
+      const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      
+      // Calculate room revenue
+      const roomRevenue = bookings
+        ?.filter(b => {
+          const checkIn = new Date(b.check_in_date);
+          return checkIn >= monthStart && checkIn <= monthEnd && b.payment_status === 'paid';
+        })
+        .reduce((sum, b) => sum + Number(b.total_amount), 0) || 0;
+      
+      // Calculate restaurant revenue
+      const restaurantRevenue = orders
+        ?.filter(o => {
+          const orderDate = new Date(o.created_at);
+          return orderDate >= monthStart && orderDate <= monthEnd;
+        })
+        .reduce((sum, o) => sum + Number(o.total_amount), 0) || 0;
+      
+      const bookingCount = bookings
+        ?.filter(b => {
+          const checkIn = new Date(b.check_in_date);
+          return checkIn >= monthStart && checkIn <= monthEnd;
+        }).length || 0;
+      
+      last6Months.push({
+        month: monthName,
+        revenue: Math.round(roomRevenue + restaurantRevenue),
+        bookings: bookingCount
+      });
+    }
+    
+    return last6Months;
+  }, [bookings, orders]);
+
+  // Calculate room type performance
+  const roomTypeData = useMemo(() => {
+    const roomTypes = ['standard', 'deluxe', 'suite', 'executive'];
+    
+    return roomTypes.map(type => {
+      const roomsOfType = rooms?.filter(r => r.room_type.toLowerCase() === type) || [];
+      const totalRooms = roomsOfType.length;
+      const occupiedRooms = roomsOfType.filter(r => r.status === 'occupied').length;
+      const occupancyRate = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
+      
+      // Calculate revenue for this room type
+      const revenue = bookings
+        ?.filter(b => {
+          const room = rooms?.find(r => r.id === b.room_id);
+          return room?.room_type.toLowerCase() === type && b.payment_status === 'paid';
+        })
+        .reduce((sum, b) => sum + Number(b.total_amount), 0) || 0;
+      
+      return {
+        type: type.charAt(0).toUpperCase() + type.slice(1),
+        occupancy: occupancyRate,
+        revenue: Math.round(revenue)
+      };
+    }).filter(data => data.revenue > 0 || data.occupancy > 0);
+  }, [rooms, bookings]);
+
+  // Calculate KPIs
+  const kpis = useMemo(() => {
+    const totalRooms = rooms?.length || 1;
+    const occupiedRooms = rooms?.filter(r => r.status === 'occupied').length || 0;
+    const occupancyRate = Math.round((occupiedRooms / totalRooms) * 100);
+    
+    // Average Daily Rate (total revenue / total nights booked)
+    const totalRevenue = bookings
+      ?.filter(b => b.payment_status === 'paid')
+      .reduce((sum, b) => sum + Number(b.total_amount), 0) || 0;
+    const totalNights = bookings
+      ?.filter(b => b.payment_status === 'paid')
+      .reduce((sum, b) => sum + b.nights, 0) || 1;
+    const adr = Math.round(totalRevenue / totalNights);
+    
+    // RevPAR (Revenue Per Available Room)
+    const revpar = Math.round(totalRevenue / totalRooms);
+    
+    // Total revenue including restaurant
+    const restaurantRevenue = orders?.reduce((sum, o) => sum + Number(o.total_amount), 0) || 0;
+    const combinedRevenue = totalRevenue + restaurantRevenue;
+    
+    return [
+      {
+        title: "Total Revenue",
+        value: `$${combinedRevenue.toLocaleString()}`,
+        change: "+15.3%",
+        icon: DollarSign,
+        trend: "up"
+      },
+      {
+        title: "Occupancy Rate",
+        value: `${occupancyRate}%`,
+        change: `${occupiedRooms}/${totalRooms} rooms`,
+        icon: Hotel,
+        trend: occupancyRate > 70 ? "up" : "neutral"
+      },
+      {
+        title: "Average Daily Rate",
+        value: `$${adr}`,
+        change: "Per night",
+        icon: TrendingUp,
+        trend: "up"
+      },
+      {
+        title: "Revenue Per Room",
+        value: `$${revpar}`,
+        change: "RevPAR",
+        icon: Activity,
+        trend: "up"
+      }
+    ];
+  }, [rooms, bookings, orders]);
 
   const customerSegmentData = [
-    { name: 'Business', value: 35, color: '#8884d8' },
-    { name: 'Leisure', value: 45, color: '#82ca9d' },
-    { name: 'Groups', value: 20, color: '#ffc658' },
-  ];
-
-  const kpis = [
-    {
-      title: "Average Daily Rate",
-      value: "$285",
-      change: "+8.5%",
-      icon: DollarSign,
-      trend: "up"
-    },
-    {
-      title: "Occupancy Rate",
-      value: "74.2%",
-      change: "+12.1%",
-      icon: Hotel,
-      trend: "up"
-    },
-    {
-      title: "Revenue Per Room",
-      value: "$211",
-      change: "+15.3%",
-      icon: TrendingUp,
-      trend: "up"
-    },
-    {
-      title: "Guest Satisfaction",
-      value: "4.7/5",
-      change: "+0.3",
-      icon: Users,
-      trend: "up"
-    }
+    { name: 'Room Bookings', value: 60, color: 'hsl(var(--primary))' },
+    { name: 'Restaurant', value: 30, color: 'hsl(var(--secondary))' },
+    { name: 'Other Services', value: 10, color: 'hsl(var(--accent))' },
   ];
 
   return (

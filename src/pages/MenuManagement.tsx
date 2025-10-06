@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { 
   Menu, 
   Plus, 
@@ -19,22 +18,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useMenuItems, MenuItem } from "@/hooks/useMenuItems";
+import { useMenuItemsDB, MenuItem } from "@/hooks/useMenuItemsDB";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import EditMenuItemModal from "@/components/menu/EditMenuItemModal";
 import DeleteMenuItemModal from "@/components/menu/DeleteMenuItemModal";
+import AddMenuItemModal from "@/components/menu/AddMenuItemModal";
 import MenuSettingsModal from "@/components/menu/MenuSettingsModal";
 import MenuTemplateModal from "@/components/menu/MenuTemplateModal";
 import MenuExportModal from "@/components/menu/MenuExportModal";
 
 const MenuManagement = () => {
-  const { menuItems, setMenuItems } = useMenuItems();
-  const { toast } = useToast();
+  const { menuItems, loading, addMenuItem, updateMenuItem, deleteMenuItem } = useMenuItemsDB();
+  const { formatCurrency } = useGlobalSettings();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -45,22 +41,21 @@ const MenuManagement = () => {
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
 
-  const handleImportData = (importedItems: Partial<MenuItem>[]) => {
-    const newItems = importedItems.map(item => ({
-      id: item.id || `item-${Date.now()}-${Math.random()}`,
-      name: item.name || "",
-      price: item.price || 0,
-      description: item.description || "",
-      category: item.category || "Main Course",
-      preparationTime: item.preparationTime || 15,
-      calories: item.calories,
-      isPopular: Boolean(item.isPopular),
-      isAvailable: item.isAvailable !== false,
-      allergens: item.allergens || [],
-      ingredients: item.ingredients || []
-    })) as MenuItem[];
-
-    setMenuItems([...menuItems, ...newItems]);
+  const handleImportData = async (importedItems: Partial<MenuItem>[]) => {
+    for (const item of importedItems) {
+      await addMenuItem({
+        name: item.name || "",
+        price: item.price || 0,
+        description: item.description || "",
+        category: item.category || "Main Course",
+        preparation_time: item.preparation_time || 15,
+        calories: item.calories,
+        is_popular: Boolean(item.is_popular),
+        is_available: item.is_available !== false,
+        allergens: item.allergens || [],
+        ingredients: item.ingredients || []
+      });
+    }
   };
 
   const categories = [
@@ -81,14 +76,14 @@ const MenuManagement = () => {
   });
 
   const MenuItemCard = ({ item }: { item: MenuItem }) => (
-    <Card className={`card-luxury ${!item.isAvailable ? 'opacity-60' : ''}`}>
+    <Card className={`card-luxury ${!item.is_available ? 'opacity-60' : ''}`}>
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <CardTitle className="text-lg">{item.name}</CardTitle>
-              {item.isPopular && <Star className="h-4 w-4 text-yellow-500 fill-current" />}
-              {!item.isAvailable && <EyeOff className="h-4 w-4 text-muted-foreground" />}
+              {item.is_popular && <Star className="h-4 w-4 text-yellow-500 fill-current" />}
+              {!item.is_available && <EyeOff className="h-4 w-4 text-muted-foreground" />}
             </div>
             <CardDescription className="mt-1">{item.description}</CardDescription>
           </div>
@@ -120,19 +115,19 @@ const MenuManagement = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="text-2xl font-bold text-accent">
-              ${item.price.toFixed(2)}
+              {formatCurrency(item.price)}
             </div>
             <div className="flex gap-2">
               <Badge variant="secondary">{item.category}</Badge>
-              <Badge variant={item.isAvailable ? "default" : "secondary"}>
-                {item.isAvailable ? "Available" : "Unavailable"}
+              <Badge variant={item.is_available ? "default" : "secondary"}>
+                {item.is_available ? "Available" : "Unavailable"}
               </Badge>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="font-medium">Prep Time:</span> {item.preparationTime}min
+              <span className="font-medium">Prep Time:</span> {item.preparation_time}min
             </div>
             {item.calories && (
               <div>
@@ -207,125 +202,13 @@ const MenuManagement = () => {
             <Settings className="h-4 w-4 mr-2" />
             Settings
           </Button>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="button-luxury">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Menu Item
-              </Button>
-            </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Add New Menu Item</DialogTitle>
-              <DialogDescription>Create a new item for your restaurant menu</DialogDescription>
-            </DialogHeader>
-            <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                <TabsTrigger value="details">Details</TabsTrigger>
-                <TabsTrigger value="allergens">Allergens</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="basic" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Item Name</Label>
-                    <Input placeholder="Enter item name" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Price ($)</Label>
-                    <Input type="number" step="0.01" placeholder="0.00" />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Description</Label>
-                  <Textarea placeholder="Describe the menu item..." />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Category</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map(category => (
-                          <SelectItem key={category} value={category}>{category}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Prep Time (min)</Label>
-                    <Input type="number" placeholder="15" />
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="details" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Calories (optional)</Label>
-                    <Input type="number" placeholder="350" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Serving Size</Label>
-                    <Input placeholder="1 portion" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Main Ingredients</Label>
-                  <Textarea placeholder="List main ingredients separated by commas..." />
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch id="popular" />
-                  <Label htmlFor="popular">Mark as Popular Item</Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch id="available" defaultChecked />
-                  <Label htmlFor="available">Available for Order</Label>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="allergens" className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Select Allergens</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {allergens.map((allergen) => (
-                      <div key={allergen} className="flex items-center space-x-2">
-                        <Switch id={allergen.toLowerCase()} />
-                        <Label htmlFor={allergen.toLowerCase()}>{allergen}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-
-            <div className="flex gap-2 pt-4">
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button 
-                className="button-luxury"
-                onClick={() => {
-                  toast({
-                    title: "Menu item saved",
-                    description: "New menu item has been added successfully."
-                  });
-                  setIsAddDialogOpen(false);
-                }}
-              >
-                Save Menu Item
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+          <Button 
+            className="button-luxury"
+            onClick={() => setIsAddDialogOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Menu Item
+          </Button>
         </div>
       </div>
 
@@ -368,35 +251,35 @@ const MenuManagement = () => {
         </Card>
         <Card className="card-luxury">
           <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Eye className="h-8 w-8 text-green-600" />
-              <div>
-                <p className="text-2xl font-bold">{menuItems.filter(i => i.isAvailable).length}</p>
-                <p className="text-sm text-muted-foreground">Available</p>
+              <div className="flex items-center gap-3">
+                <Eye className="h-8 w-8 text-green-600" />
+                <div>
+                  <p className="text-2xl font-bold">{menuItems.filter(i => i.is_available).length}</p>
+                  <p className="text-sm text-muted-foreground">Available</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="card-luxury">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Star className="h-8 w-8 text-yellow-500" />
-              <div>
-                <p className="text-2xl font-bold">{menuItems.filter(i => i.isPopular).length}</p>
-                <p className="text-sm text-muted-foreground">Popular Items</p>
+            </CardContent>
+          </Card>
+          <Card className="card-luxury">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <Star className="h-8 w-8 text-yellow-500" />
+                <div>
+                  <p className="text-2xl font-bold">{menuItems.filter(i => i.is_popular).length}</p>
+                  <p className="text-sm text-muted-foreground">Popular Items</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="card-luxury">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <DollarSign className="h-8 w-8 text-purple-600" />
-              <div>
-                <p className="text-2xl font-bold">
-                  ${menuItems.length > 0 ? (menuItems.reduce((sum, item) => sum + item.price, 0) / menuItems.length).toFixed(2) : '0.00'}
-                </p>
-                <p className="text-sm text-muted-foreground">Avg Price</p>
+            </CardContent>
+          </Card>
+          <Card className="card-luxury">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <DollarSign className="h-8 w-8 text-purple-600" />
+                <div>
+                  <p className="text-2xl font-bold">
+                    {formatCurrency(menuItems.length > 0 ? menuItems.reduce((sum, item) => sum + item.price, 0) / menuItems.length : 0)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Avg Price</p>
               </div>
             </div>
           </CardContent>
@@ -419,6 +302,14 @@ const MenuManagement = () => {
       )}
 
       {/* Modals */}
+      <AddMenuItemModal
+        isOpen={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
+        onAdd={addMenuItem}
+        categories={categories}
+        allergens={allergens}
+      />
+      
       <EditMenuItemModal 
         isOpen={isEditDialogOpen}
         onClose={() => {
@@ -426,6 +317,9 @@ const MenuManagement = () => {
           setSelectedItem(null);
         }}
         item={selectedItem}
+        onUpdate={updateMenuItem}
+        categories={categories}
+        allergens={allergens}
       />
       
       <DeleteMenuItemModal 
@@ -435,6 +329,7 @@ const MenuManagement = () => {
           setSelectedItem(null);
         }}
         item={selectedItem}
+        onDelete={deleteMenuItem}
       />
       
       <MenuSettingsModal 

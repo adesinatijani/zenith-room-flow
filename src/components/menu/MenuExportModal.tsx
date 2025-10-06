@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import * as XLSX from 'xlsx';
-import { MenuItem } from "@/hooks/useMenuItems";
+import { MenuItem } from "@/hooks/useMenuItemsDB";
 
 interface MenuExportModalProps {
   isOpen: boolean;
@@ -25,10 +25,10 @@ const MenuExportModal = ({ isOpen, onClose, menuItems }: MenuExportModalProps) =
     price: true,
     description: true,
     category: true,
-    preparationTime: true,
+    preparation_time: true,
     calories: true,
-    isPopular: true,
-    isAvailable: true,
+    is_popular: true,
+    is_available: true,
     allergens: true,
     ingredients: true
   });
@@ -63,10 +63,10 @@ const MenuExportModal = ({ isOpen, onClose, menuItems }: MenuExportModalProps) =
       if (includeFields.price) exportItem.price = item.price;
       if (includeFields.description) exportItem.description = item.description;
       if (includeFields.category) exportItem.category = item.category;
-      if (includeFields.preparationTime) exportItem.preparationTime = item.preparationTime;
+      if (includeFields.preparation_time) exportItem.preparation_time = item.preparation_time;
       if (includeFields.calories) exportItem.calories = item.calories || '';
-      if (includeFields.isPopular) exportItem.isPopular = item.isPopular ? 'Yes' : 'No';
-      if (includeFields.isAvailable) exportItem.isAvailable = item.isAvailable ? 'Yes' : 'No';
+      if (includeFields.is_popular) exportItem.is_popular = item.is_popular ? 'Yes' : 'No';
+      if (includeFields.is_available) exportItem.is_available = item.is_available ? 'Yes' : 'No';
       if (includeFields.allergens) exportItem.allergens = item.allergens.join(', ');
       if (includeFields.ingredients) exportItem.ingredients = item.ingredients.join(', ');
       
