@@ -187,6 +187,7 @@ export type Database = {
           content: Json
           created_at: string | null
           created_by: string | null
+          footer_content: Json | null
           id: string
           is_published: boolean | null
           page_slug: string
@@ -198,6 +199,7 @@ export type Database = {
           content?: Json
           created_at?: string | null
           created_by?: string | null
+          footer_content?: Json | null
           id?: string
           is_published?: boolean | null
           page_slug: string
@@ -209,6 +211,7 @@ export type Database = {
           content?: Json
           created_at?: string | null
           created_by?: string | null
+          footer_content?: Json | null
           id?: string
           is_published?: boolean | null
           page_slug?: string

@@ -10,11 +10,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Save, Eye, EyeOff, Settings, Palette, Megaphone, FileText } from "lucide-react";
+import { ArrowLeft, Save, Eye, EyeOff, Settings, Palette, Megaphone, FileText, Plus, Trash2, Link as LinkIcon, LayoutGrid } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import { updateSiteSettings } from "@/utils/dynamicSiteSettings";
+import { Separator } from "@/components/ui/separator";
+import { FooterEditor } from "@/components/settings/FooterEditor";
 
 const ContentManagement = () => {
   const { isAdmin, loading: authLoading } = useAuth();
@@ -212,6 +214,10 @@ const ContentManagement = () => {
               <Megaphone className="h-4 w-4 mr-2" />
               Advertisements
             </TabsTrigger>
+            <TabsTrigger value="footer">
+              <LayoutGrid className="h-4 w-4 mr-2" />
+              Footer & Buttons
+            </TabsTrigger>
           </TabsList>
 
           {/* Page Content Tab */}
@@ -342,31 +348,127 @@ const ContentManagement = () => {
 
           {/* Advertisements Tab */}
           <TabsContent value="ads">
-            <Card>
-              <CardHeader>
-                <CardTitle>Advertisement Management</CardTitle>
-                <CardDescription>Manage advertisements on your homepage</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  value={JSON.stringify(editingSettings?.advertisements || [], null, 2)}
-                  onChange={(e) => {
-                    try {
-                      const ads = JSON.parse(e.target.value);
-                      setEditingSettings({ ...editingSettings, advertisements: ads });
-                    } catch (error) {
-                      console.error('Invalid JSON');
-                    }
-                  }}
-                  rows={10}
-                  className="font-mono"
-                  placeholder='[{"image": "/ad1.jpg", "link": "https://example.com", "title": "Special Offer"}]'
-                />
-                <p className="text-sm text-muted-foreground mt-2">
-                  Enter advertisements as JSON array with image, link, and title fields
-                </p>
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Advertisement Management</CardTitle>
+                      <CardDescription>Add and manage promotional content on your homepage</CardDescription>
+                    </div>
+                    <Button 
+                      onClick={() => {
+                        const newAds = [...(editingSettings?.advertisements || []), {
+                          title: "New Advertisement",
+                          description: "Add your description here",
+                          image_url: "",
+                          link_url: ""
+                        }];
+                        setEditingSettings({ ...editingSettings, advertisements: newAds });
+                      }}
+                      size="sm"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Advertisement
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {(!editingSettings?.advertisements || editingSettings.advertisements.length === 0) ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Megaphone className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>No advertisements yet. Click "Add Advertisement" to create one.</p>
+                    </div>
+                  ) : (
+                    editingSettings.advertisements.map((ad: any, index: number) => (
+                      <Card key={index} className="relative">
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <CardTitle className="text-base">Advertisement {index + 1}</CardTitle>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                const newAds = editingSettings.advertisements.filter((_: any, i: number) => i !== index);
+                                setEditingSettings({ ...editingSettings, advertisements: newAds });
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label>Title</Label>
+                              <Input
+                                value={ad.title || ''}
+                                onChange={(e) => {
+                                  const newAds = [...editingSettings.advertisements];
+                                  newAds[index].title = e.target.value;
+                                  setEditingSettings({ ...editingSettings, advertisements: newAds });
+                                }}
+                                placeholder="e.g., Summer Special Offer"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Image URL</Label>
+                              <Input
+                                value={ad.image_url || ''}
+                                onChange={(e) => {
+                                  const newAds = [...editingSettings.advertisements];
+                                  newAds[index].image_url = e.target.value;
+                                  setEditingSettings({ ...editingSettings, advertisements: newAds });
+                                }}
+                                placeholder="/images/ad.jpg"
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Description</Label>
+                            <Textarea
+                              value={ad.description || ''}
+                              onChange={(e) => {
+                                const newAds = [...editingSettings.advertisements];
+                                newAds[index].description = e.target.value;
+                                setEditingSettings({ ...editingSettings, advertisements: newAds });
+                              }}
+                              placeholder="Add a brief description..."
+                              rows={2}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="flex items-center gap-2">
+                              <LinkIcon className="h-4 w-4" />
+                              Link URL (optional)
+                            </Label>
+                            <Input
+                              value={ad.link_url || ''}
+                              onChange={(e) => {
+                                const newAds = [...editingSettings.advertisements];
+                                newAds[index].link_url = e.target.value;
+                                setEditingSettings({ ...editingSettings, advertisements: newAds });
+                              }}
+                              placeholder="https://example.com/offer"
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Footer & Buttons Tab */}
+          <TabsContent value="footer">
+            {currentPage && (
+              <FooterEditor
+                footerContent={editingContent?.footer || {}}
+                onChange={(footer) => setEditingContent({ ...editingContent, footer })}
+              />
+            )}
           </TabsContent>
         </Tabs>
       </div>
