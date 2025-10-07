@@ -1006,6 +1006,7 @@ export type Database = {
       hotel_settings: {
         Row: {
           accent_color: string | null
+          advertisements: Json | null
           background_color: string | null
           border_color: string | null
           card_color: string | null
@@ -1015,6 +1016,9 @@ export type Database = {
           date_format: string | null
           desktop_notifications: boolean | null
           email_notifications: boolean | null
+          favicon_url: string | null
+          hero_background_opacity: number | null
+          hero_image_opacity: number | null
           hotel_address: string | null
           hotel_description: string | null
           hotel_email: string | null
@@ -1025,10 +1029,12 @@ export type Database = {
           hotel_whatsapp: string | null
           id: string
           language: string
+          logo_url: string | null
           notifications_enabled: boolean | null
           payment_gateways: Json | null
           primary_color: string | null
           session_timeout: number | null
+          site_title: string | null
           sms_notifications: boolean | null
           tax_rate: number | null
           text_color: string | null
@@ -1039,6 +1045,7 @@ export type Database = {
         }
         Insert: {
           accent_color?: string | null
+          advertisements?: Json | null
           background_color?: string | null
           border_color?: string | null
           card_color?: string | null
@@ -1048,6 +1055,9 @@ export type Database = {
           date_format?: string | null
           desktop_notifications?: boolean | null
           email_notifications?: boolean | null
+          favicon_url?: string | null
+          hero_background_opacity?: number | null
+          hero_image_opacity?: number | null
           hotel_address?: string | null
           hotel_description?: string | null
           hotel_email?: string | null
@@ -1058,10 +1068,12 @@ export type Database = {
           hotel_whatsapp?: string | null
           id?: string
           language?: string
+          logo_url?: string | null
           notifications_enabled?: boolean | null
           payment_gateways?: Json | null
           primary_color?: string | null
           session_timeout?: number | null
+          site_title?: string | null
           sms_notifications?: boolean | null
           tax_rate?: number | null
           text_color?: string | null
@@ -1072,6 +1084,7 @@ export type Database = {
         }
         Update: {
           accent_color?: string | null
+          advertisements?: Json | null
           background_color?: string | null
           border_color?: string | null
           card_color?: string | null
@@ -1081,6 +1094,9 @@ export type Database = {
           date_format?: string | null
           desktop_notifications?: boolean | null
           email_notifications?: boolean | null
+          favicon_url?: string | null
+          hero_background_opacity?: number | null
+          hero_image_opacity?: number | null
           hotel_address?: string | null
           hotel_description?: string | null
           hotel_email?: string | null
@@ -1091,10 +1107,12 @@ export type Database = {
           hotel_whatsapp?: string | null
           id?: string
           language?: string
+          logo_url?: string | null
           notifications_enabled?: boolean | null
           payment_gateways?: Json | null
           primary_color?: string | null
           session_timeout?: number | null
+          site_title?: string | null
           sms_notifications?: boolean | null
           tax_rate?: number | null
           text_color?: string | null

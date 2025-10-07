@@ -165,9 +165,13 @@ const Index = () => {
         <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 bg-gradient-primary rounded-lg">
-                <Hotel className="h-4 w-4 sm:h-6 sm:w-6 text-primary-foreground" />
-              </div>
+              {settings.logo_url ? (
+                <img src={settings.logo_url} alt={settings.hotel_name} className="h-8 w-8 sm:h-10 sm:w-10 object-contain" />
+              ) : (
+                <div className="p-1.5 sm:p-2 bg-gradient-primary rounded-lg">
+                  <Hotel className="h-4 w-4 sm:h-6 sm:w-6 text-primary-foreground" />
+                </div>
+              )}
               <div className="hidden sm:block">
                 <h1 className="text-lg sm:text-xl font-bold text-foreground">{settings.hotel_name}</h1>
                 <p className="text-xs sm:text-sm text-muted-foreground">Management System</p>
@@ -203,8 +207,12 @@ const Index = () => {
           alt="Luxury hotel lobby interior" 
           className="absolute inset-0 w-full h-full object-cover mix-blend-overlay"
           loading="eager"
+          style={{ opacity: (settings.hero_image_opacity ?? 100) / 100 }}
         />
-        <div className="absolute inset-0 bg-black/40"></div>
+        <div 
+          className="absolute inset-0 bg-black"
+          style={{ opacity: (settings.hero_background_opacity ?? 40) / 100 }}
+        ></div>
         <div 
           className="relative z-10 text-center max-w-4xl mx-auto px-4"
           style={{ color: pageContent?.hero?.text_color || '#ffffff' }}
@@ -393,6 +401,37 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Advertisements Section */}
+      {settings.advertisements && settings.advertisements.length > 0 && (
+        <section className="py-12 sm:py-16 bg-gradient-to-r from-accent/10 via-primary/10 to-accent/10">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {settings.advertisements.map((ad: any, index: number) => (
+                <Card key={index} className="card-luxury overflow-hidden">
+                  {ad.image_url && (
+                    <img src={ad.image_url} alt={ad.title} className="w-full h-48 object-cover" />
+                  )}
+                  <CardHeader>
+                    <CardTitle>{ad.title}</CardTitle>
+                    <CardDescription>{ad.description}</CardDescription>
+                  </CardHeader>
+                  {ad.link_url && (
+                    <CardContent>
+                      <Button className="w-full" asChild>
+                        <a href={ad.link_url} target="_blank" rel="noopener noreferrer">
+                          Learn More
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </a>
+                      </Button>
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Contact Section */}
       <section id="contact" className="py-20 bg-muted/30">

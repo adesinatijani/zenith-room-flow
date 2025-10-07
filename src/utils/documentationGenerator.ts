@@ -842,7 +842,9 @@ export class HotelManagementDocumentationGenerator {
       const buffer = await Packer.toBuffer(document);
       console.log('Documentation generated successfully');
       
-      return buffer;
+      // Convert Buffer to ArrayBuffer
+      const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+      return arrayBuffer as ArrayBuffer;
     } catch (error) {
       console.error('Error in generateDocumentation:', error);
       throw error;

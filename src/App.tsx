@@ -11,6 +11,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { HotelLayout } from "./components/layout/HotelLayout";
 import { MobileWrapper } from "./components/mobile/MobileWrapper";
 import { applyThemeColors } from "./utils/themeColors";
+import { updateSiteSettings } from "./utils/dynamicSiteSettings";
 import MobileStaffLogin from "./components/mobile/MobileStaffLogin";
 import MobileStaffDashboard from "./components/mobile/MobileStaffDashboard";
 import Index from "./pages/Index";
@@ -53,6 +54,7 @@ const App = () => {
   // Apply theme colors on mount
   useEffect(() => {
     applyThemeColors();
+    updateSiteSettings();
   }, []);
 
   return (

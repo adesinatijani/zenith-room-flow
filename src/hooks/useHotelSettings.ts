@@ -18,6 +18,12 @@ export interface HotelSettings {
   timezone: string;
   date_format: string;
   time_format: string;
+  logo_url?: string;
+  favicon_url?: string;
+  site_title?: string;
+  hero_image_opacity?: number;
+  hero_background_opacity?: number;
+  advertisements?: any[];
   notifications_enabled: boolean;
   email_notifications: boolean;
   sms_notifications: boolean;
@@ -50,6 +56,12 @@ const defaultSettings: HotelSettings = {
   timezone: "UTC",
   date_format: "MM/dd/yyyy",
   time_format: "12h",
+  logo_url: "/placeholder.svg",
+  favicon_url: "/favicon.ico",
+  site_title: "ALOKOLODO HOTELS Management System",
+  hero_image_opacity: 0.7,
+  hero_background_opacity: 0.9,
+  advertisements: [],
   notifications_enabled: true,
   email_notifications: true,
   sms_notifications: false,
@@ -90,12 +102,13 @@ export const useHotelSettings = () => {
       if (data) {
         const settingsData = {
           ...data,
+          advertisements: Array.isArray(data.advertisements) ? data.advertisements : [],
           payment_gateways: typeof data.payment_gateways === 'string' 
             ? JSON.parse(data.payment_gateways) 
             : data.payment_gateways || defaultSettings.payment_gateways
         };
         console.log("Setting hotel settings to:", settingsData);
-        setSettings(settingsData);
+        setSettings(settingsData as HotelSettings);
       } else {
         console.log("No settings found, using defaults with hotel name:", defaultSettings.hotel_name);
         // If no settings exist, use defaults (which already have ALOKOLODO HOTELS)
@@ -148,10 +161,11 @@ export const useHotelSettings = () => {
 
       setSettings({
         ...result.data,
+        advertisements: Array.isArray(result.data.advertisements) ? result.data.advertisements : [],
         payment_gateways: typeof result.data.payment_gateways === 'string' 
           ? JSON.parse(result.data.payment_gateways) 
           : result.data.payment_gateways
-      });
+      } as HotelSettings);
 
       toast({
         title: "Settings saved",
