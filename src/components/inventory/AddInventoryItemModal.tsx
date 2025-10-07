@@ -118,7 +118,7 @@ const AddInventoryItemModal = ({ isOpen, onClose, onItemAdded }: AddInventoryIte
                 id="current_quantity"
                 type="number"
                 min="0"
-                {...register("current_quantity", { required: "Current quantity is required", min: 0 })}
+                {...register("current_quantity", { required: "Current quantity is required", min: 0, valueAsNumber: true })}
                 placeholder="0"
               />
             </div>
@@ -129,7 +129,7 @@ const AddInventoryItemModal = ({ isOpen, onClose, onItemAdded }: AddInventoryIte
                 id="min_threshold"
                 type="number"
                 min="0"
-                {...register("min_threshold", { required: "Minimum threshold is required", min: 0 })}
+                {...register("min_threshold", { required: "Minimum threshold is required", min: 0, valueAsNumber: true })}
                 placeholder="0"
               />
             </div>
@@ -140,7 +140,7 @@ const AddInventoryItemModal = ({ isOpen, onClose, onItemAdded }: AddInventoryIte
                 id="max_threshold"
                 type="number"
                 min="0"
-                {...register("max_threshold", { required: "Maximum threshold is required", min: 0 })}
+                {...register("max_threshold", { required: "Maximum threshold is required", min: 0, valueAsNumber: true })}
                 placeholder="0"
               />
             </div>
@@ -170,7 +170,7 @@ const AddInventoryItemModal = ({ isOpen, onClose, onItemAdded }: AddInventoryIte
                 type="number"
                 min="0"
                 step="0.01"
-                {...register("cost_per_unit", { required: "Cost per unit is required", min: 0 })}
+                {...register("cost_per_unit", { required: "Cost per unit is required", min: 0, valueAsNumber: true })}
                 placeholder="0.00"
               />
             </div>

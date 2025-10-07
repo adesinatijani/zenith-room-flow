@@ -1268,6 +1268,7 @@ export type Database = {
           name: string
           preparation_time: number | null
           price: number
+          tax_rate: number | null
           tracks_inventory: boolean | null
           updated_at: string
         }
@@ -1287,6 +1288,7 @@ export type Database = {
           name: string
           preparation_time?: number | null
           price?: number
+          tax_rate?: number | null
           tracks_inventory?: boolean | null
           updated_at?: string
         }
@@ -1306,6 +1308,7 @@ export type Database = {
           name?: string
           preparation_time?: number | null
           price?: number
+          tax_rate?: number | null
           tracks_inventory?: boolean | null
           updated_at?: string
         }
@@ -1847,6 +1850,7 @@ export type Database = {
           room_number: string
           room_type: string
           status: string
+          tax_rate: number | null
           updated_at: string
         }
         Insert: {
@@ -1860,6 +1864,7 @@ export type Database = {
           room_number: string
           room_type?: string
           status?: string
+          tax_rate?: number | null
           updated_at?: string
         }
         Update: {
@@ -1873,6 +1878,7 @@ export type Database = {
           room_number?: string
           room_type?: string
           status?: string
+          tax_rate?: number | null
           updated_at?: string
         }
         Relationships: []

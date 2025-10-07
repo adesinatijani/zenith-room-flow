@@ -68,8 +68,8 @@ const MenuManagement = () => {
     "Gluten", "Dairy", "Nuts", "Shellfish", "Eggs", "Soy", "Fish"
   ];
 
-  // Separate kitchen items from drinks
-  const drinkCategories = ['soft_drinks', 'beer', 'liquor', 'wine', 'juice', 'water', 'energy_drinks', 'cocktails', 'spirits', 'drinks'];
+  // Separate kitchen items from drinks (match database categories)
+  const drinkCategories = ['soft drinks', 'alcoholic beverages', 'spirits', 'hot beverages', 'beer', 'wine', 'liquor', 'juice', 'water', 'energy drinks', 'cocktails', 'drinks'];
   
   const kitchenItems = menuItems.filter(item => !drinkCategories.includes(item.category.toLowerCase()));
   const drinkItems = menuItems.filter(item => drinkCategories.includes(item.category.toLowerCase()));

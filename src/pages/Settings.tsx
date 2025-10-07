@@ -14,6 +14,7 @@ import {
   Clock,
   Calendar
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -284,17 +285,70 @@ const Settings = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="tax-rate">Default Tax Rate (%)</Label>
-                <Input
-                  id="tax-rate"
-                  type="number"
-                  step="0.1"
-                  value={settings.tax_rate}
-                  onChange={(e) => updateSetting('tax_rate', parseFloat(e.target.value) || 0)}
-                />
+                <Label className="text-base font-semibold">Tax Rates Configuration</Label>
+                <p className="text-sm text-muted-foreground">Set different tax rates for different services</p>
               </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="tax-rate">Default Tax Rate (%)</Label>
+                  <Input
+                    id="tax-rate"
+                    type="number"
+                    step="0.1"
+                    value={settings.tax_rate}
+                    onChange={(e) => updateSetting('tax_rate', parseFloat(e.target.value) || 0)}
+                  />
+                  <p className="text-xs text-muted-foreground">Global default for all items</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="kitchen-tax-rate">Kitchen/Restaurant Tax (%)</Label>
+                  <Input
+                    id="kitchen-tax-rate"
+                    type="number"
+                    step="0.1"
+                    value={settings.tax_rate}
+                    onChange={async (e) => {
+                      const newRate = parseFloat(e.target.value) || 0;
+                      updateSetting('tax_rate', newRate);
+                      // Update all menu items
+                      const { error } = await supabase
+                        .from('menu_items')
+                        .update({ tax_rate: newRate })
+                        .neq('id', '00000000-0000-0000-0000-000000000000');
+                      if (error) console.error('Error updating menu items tax:', error);
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">Applied to all food & beverage</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="room-tax-rate">Room Tax (%)</Label>
+                  <Input
+                    id="room-tax-rate"
+                    type="number"
+                    step="0.1"
+                    value={settings.tax_rate}
+                    onChange={async (e) => {
+                      const newRate = parseFloat(e.target.value) || 0;
+                      updateSetting('tax_rate', newRate);
+                      // Update all rooms
+                      const { error } = await supabase
+                        .from('rooms')
+                        .update({ tax_rate: newRate })
+                        .neq('id', '00000000-0000-0000-0000-000000000000');
+                      if (error) console.error('Error updating rooms tax:', error);
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">Applied to room bookings</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
               <div className="space-y-2">
                 <Label htmlFor="timezone">Timezone</Label>

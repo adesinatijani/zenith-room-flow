@@ -24,12 +24,23 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { useMenuItems, MenuItem } from "@/hooks/useMenuItems";
 import { useRestaurantTables, RestaurantTable } from "@/hooks/useRestaurantTables";
 import { useOrders, Order } from "@/hooks/useOrders";
 import { useRoomsDB } from "@/hooks/useRoomsDB";
 import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
+import { useMenuItemsDB } from "@/hooks/useMenuItemsDB";
 import AddTableModal from "./AddTableModal";
+
+interface MenuItem {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  category: string;
+  is_available: boolean;
+  allergens?: string[];
+  preparation_time?: number;
+}
 
 interface OrderItem extends MenuItem {
   quantity: number;
@@ -37,7 +48,7 @@ interface OrderItem extends MenuItem {
 }
 
 const RestaurantPOS = () => {
-  const { getFoodAndBeverageItems } = useMenuItems();
+  const { menuItems, loading: menuLoading } = useMenuItemsDB();
   const { tables, loading: tablesLoading, updateTableStatus, deleteTable } = useRestaurantTables();
   const { orders, loading: ordersLoading, createOrder, addItemToOrder, updateItemQuantity, processPayment, deleteOrder } = useOrders();
   const { rooms, loading: roomsLoading } = useRoomsDB();
@@ -55,7 +66,8 @@ const RestaurantPOS = () => {
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [isAddingItem, setIsAddingItem] = useState(false);
 
-  const restaurantItems = getFoodAndBeverageItems();
+  // Filter available menu items for restaurant
+  const restaurantItems = menuItems.filter(item => item.is_available);
 
   // Map menu categories to display categories
   const categoryMap = {
@@ -591,13 +603,15 @@ const RestaurantPOS = () => {
                         >
                           <CardContent className="p-4 text-center">
                             <h4 className="font-bold text-sm mb-2">{item.name}</h4>
-                            <div className="text-lg font-bold text-green-600 mb-1">
+                             <div className="text-lg font-bold text-green-600 mb-1">
                               {formatCurrency(item.price)}
                             </div>
-                            <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
-                              <Clock className="h-3 w-3" />
-                              {item.preparationTime}min
-                            </div>
+                            {item.preparation_time && (
+                              <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
+                                <Clock className="h-3 w-3" />
+                                {item.preparation_time}min
+                              </div>
+                            )}
                           </CardContent>
                         </Card>
                       ))}
@@ -619,7 +633,7 @@ const RestaurantPOS = () => {
                   <span className="font-medium">{formatCurrency(getSelectedOrderTotals().subtotal)}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm text-gray-600">
-                  <span>Tax ({settings.tax_rate || 7.5}%):</span>
+                  <span>Tax (varies by item):</span>
                   <span>{formatCurrency(getSelectedOrderTotals().tax)}</span>
                 </div>
                 <div className="flex justify-between items-center text-2xl font-bold border-t pt-2">
