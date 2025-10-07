@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import AddInventoryItemModal from "@/components/inventory/AddInventoryItemModal";
 import EditInventoryItemModal from "@/components/inventory/EditInventoryItemModal";
 import IssueInventoryModal from "@/components/inventory/IssueInventoryModal";
@@ -74,6 +75,7 @@ interface POSConnection {
 
 const InventoryManagement = () => {
   const { toast } = useToast();
+  const { formatCurrency } = useGlobalSettings();
   const [activeTab, setActiveTab] = useState("inventory");
   const [searchTerm, setSearchTerm] = useState("");
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
@@ -432,7 +434,7 @@ const InventoryManagement = () => {
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Unit Price</span>
-                            <span>${item.unitPrice}</span>
+                            <span>{formatCurrency(item.unitPrice)}</span>
                           </div>
                         </div>
                       </div>
@@ -462,7 +464,7 @@ const InventoryManagement = () => {
                         <div className="space-y-1">
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Total Value</span>
-                            <span className="font-bold">${(item.currentStock * item.unitPrice).toFixed(2)}</span>
+                            <span className="font-bold">{formatCurrency(item.currentStock * item.unitPrice)}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Days Until Reorder</span>
