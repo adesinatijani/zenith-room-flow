@@ -219,22 +219,33 @@ const InventoryManagement = () => {
   const handleImportData = async (items: any[]) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase
+      console.log('Importing items:', items);
+      
+      // Insert items into Supabase
+      const { data, error } = await supabase
         .from('inventory')
-        .insert(items);
+        .insert(items)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase insert error:', error);
+        throw error;
+      }
+
+      console.log('Successfully inserted:', data);
 
       toast({
-        title: "Items Imported",
-        description: `${items.length} inventory items imported successfully.`,
+        title: "Items Imported Successfully",
+        description: `${items.length} inventory items have been added to your inventory.`,
       });
 
       fetchInventory(); // Refresh the list
-    } catch (error) {
+      setShowTemplateModal(false); // Close the modal
+    } catch (error: any) {
+      console.error('Import error details:', error);
       toast({
-        title: "Import Error",
-        description: "Failed to import items. Please try again.",
+        title: "Import Failed",
+        description: error.message || "Failed to import items. Please check the console for details.",
         variant: "destructive"
       });
     } finally {

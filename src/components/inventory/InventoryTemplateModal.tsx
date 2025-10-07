@@ -110,16 +110,57 @@ const InventoryTemplateModal = ({ isOpen, onClose, onImportData }: InventoryTemp
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-        const processedData = jsonData.map((row: any) => ({
-          item_name: row.item_name || row['Item Name'] || '',
-          category: row.category || row['Category'] || 'office',
-          current_quantity: Number(row.current_quantity || row['Current Quantity'] || 0),
-          min_threshold: Number(row.min_threshold || row['Min Threshold'] || 10),
-          max_threshold: Number(row.max_threshold || row['Max Threshold'] || 100),
-          unit: row.unit || row['Unit'] || 'pieces',
-          cost_per_unit: Number(row.cost_per_unit || row['Cost Per Unit'] || 0),
-          supplier: row.supplier || row['Supplier'] || ''
-        }));
+        // Map category values to valid database categories
+        const mapCategory = (cat: string): string => {
+          const categoryLower = cat?.toLowerCase() || '';
+          
+          // Beverages mapping
+          if (categoryLower.includes('drink') || categoryLower.includes('beer') || 
+              categoryLower.includes('wine') || categoryLower.includes('spirit') || 
+              categoryLower.includes('beverage') || categoryLower.includes('juice') ||
+              categoryLower.includes('water') || categoryLower.includes('soda')) {
+            return 'beverages';
+          }
+          
+          // Food mapping
+          if (categoryLower.includes('food') || categoryLower.includes('snack') || 
+              categoryLower.includes('meal') || categoryLower.includes('ingredient')) {
+            return 'food';
+          }
+          
+          // Housekeeping mapping
+          if (categoryLower.includes('housekeeping') || categoryLower.includes('cleaning') || 
+              categoryLower.includes('towel') || categoryLower.includes('linen')) {
+            return 'housekeeping';
+          }
+          
+          // Maintenance mapping
+          if (categoryLower.includes('maintenance') || categoryLower.includes('repair') || 
+              categoryLower.includes('tool')) {
+            return 'maintenance';
+          }
+          
+          // Default to beverages for drinks, otherwise office
+          return categoryLower.includes('drink') ? 'beverages' : 'office';
+        };
+
+        const processedData = jsonData.map((row: any) => {
+          const rawCategory = row.category || row['Category'] || 'office';
+          const mappedCategory = mapCategory(rawCategory);
+          
+          return {
+            item_name: row.item_name || row['Item Name'] || '',
+            category: mappedCategory,
+            current_quantity: Number(row.current_quantity || row['Current Quantity'] || 0),
+            min_threshold: Number(row.min_threshold || row['Min Threshold'] || 10),
+            max_threshold: Number(row.max_threshold || row['Max Threshold'] || 100),
+            unit: row.unit || row['Unit'] || 'pieces',
+            cost_per_unit: Number(row.cost_per_unit || row['Cost Per Unit'] || 0),
+            supplier: row.supplier || row['Supplier'] || ''
+          };
+        });
+
+        console.log('Processed import data:', processedData);
 
         setUploadedData(processedData);
         
