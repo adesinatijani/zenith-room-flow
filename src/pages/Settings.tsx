@@ -25,6 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { useHotelSettings } from "@/hooks/useHotelSettings";
 import { ReceiptTemplateSettings } from "@/components/settings/ReceiptTemplateSettings";
+import { ThemeColorEditor } from "@/components/settings/ThemeColorEditor";
 
 const Settings = () => {
   const { 
@@ -237,6 +238,9 @@ const Settings = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Theme Colors */}
+        <ThemeColorEditor settings={settings} onUpdate={() => saveSettings(settings)} />
 
         {/* Currency & Localization */}
         <Card className="card-luxury">

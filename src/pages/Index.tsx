@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from "react";
+import React, { memo, useMemo, useState, useEffect } from "react";
 import { 
   Hotel, 
   Calendar, 
@@ -21,6 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useRoomsDB } from "@/hooks/useRoomsDB";
 import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
+import { useContentPages } from "@/hooks/useContentPages";
 import { Skeleton } from "@/components/ui/skeleton";
 import heroImage from "@/assets/hero-hotel.jpg";
 
@@ -109,6 +110,14 @@ const RoomCard = memo(({ room, formatCurrency }: { room: any; formatCurrency: (a
 const Index = () => {
   const { rooms, loading } = useRoomsDB();
   const { formatCurrency, settings } = useGlobalSettings();
+  const { getPageBySlug } = useContentPages();
+  const [pageContent, setPageContent] = useState<any>(null);
+
+  useEffect(() => {
+    getPageBySlug('home').then(data => {
+      if (data) setPageContent(data.content);
+    });
+  }, []);
 
   // Memoize expensive calculations
   const availableRooms = useMemo(() => 
@@ -193,11 +202,11 @@ const Index = () => {
         <div className="absolute inset-0 luxury-gradient opacity-80"></div>
         <div className="relative z-10 text-center text-primary-foreground max-w-4xl mx-auto px-4">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-4 sm:mb-6">
-            Experience
+            {pageContent?.hero?.title || "Experience"}
             <span className="block text-accent">Luxury</span>
           </h1>
           <p className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 sm:mb-8 opacity-90">
-            World-class amenities, exceptional service, and unforgettable memories await you
+            {pageContent?.hero?.subtitle || "World-class amenities, exceptional service, and unforgettable memories await you"}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center max-w-md sm:max-w-none mx-auto">
             <Button size="lg" className="button-luxury text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 touch-target" asChild>
@@ -220,10 +229,10 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-8 sm:mb-12 lg:mb-16">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-3 sm:mb-4">
-              Complete Hotel Management Solution
+              {pageContent?.about?.title || "Complete Hotel Management Solution"}
             </h2>
             <p className="text-base sm:text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto">
-              Our comprehensive system handles every aspect of hotel operations with modern, touch-friendly interfaces
+              {pageContent?.about?.description || "Our comprehensive system handles every aspect of hotel operations with modern, touch-friendly interfaces"}
             </p>
           </div>
           
@@ -371,10 +380,10 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-foreground mb-4">
-              Get In Touch
+              {pageContent?.contact?.title || "Get In Touch"}
             </h2>
             <p className="text-xl text-muted-foreground">
-              Ready to experience luxury? Contact us today
+              {pageContent?.contact?.description || "Ready to experience luxury? Contact us today"}
             </p>
           </div>
           

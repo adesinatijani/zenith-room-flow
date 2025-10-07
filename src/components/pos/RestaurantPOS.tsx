@@ -40,6 +40,7 @@ interface MenuItem {
   is_available: boolean;
   allergens?: string[];
   preparation_time?: number;
+  tax_rate?: number;
 }
 
 interface OrderItem extends MenuItem {

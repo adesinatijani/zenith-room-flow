@@ -8,6 +8,7 @@ interface MenuItem {
   name: string;
   category: string;
   price: number;
+  tax_rate?: number;
 }
 
 export interface Order {
@@ -153,6 +154,7 @@ export const useOrders = () => {
             item_category: item.category,
             price: item.price,
             quantity,
+            tax_rate: item.tax_rate || settings.tax_rate || 7.5,
             status: 'pending'
           }])
           .select()

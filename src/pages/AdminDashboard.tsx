@@ -10,7 +10,8 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Settings
+  Settings,
+  FileEdit
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -151,6 +152,10 @@ const AdminDashboard = () => {
         </div>
         <div className="flex items-center gap-3">
           <NetworkStatus showDetails />
+          <Button variant="outline" onClick={() => navigate('/admin/content')}>
+            <FileEdit className="h-4 w-4 mr-2" />
+            Edit Content
+          </Button>
           <Button variant="outline" onClick={() => setIsSettingsOpen(true)}>
             <Settings className="h-4 w-4 mr-2" />
             Hotel Settings
