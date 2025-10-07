@@ -37,7 +37,8 @@ import {
   Package2,
   Truck,
   CheckCircle,
-  XCircle
+  XCircle,
+  Trash2
 } from "lucide-react";
 
 interface InventoryItem {
@@ -340,6 +341,35 @@ const InventoryManagement = () => {
     setShowRestockModal(true);
   };
 
+  const handleDeleteItem = async (item: InventoryItem) => {
+    if (!confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('inventory')
+        .delete()
+        .eq('id', item.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Item Deleted",
+        description: `${item.name} has been removed from inventory.`,
+      });
+
+      fetchInventory(); // Refresh the list
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      toast({
+        title: "Delete Failed",
+        description: error.message || "Failed to delete item.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -501,6 +531,15 @@ const InventoryManagement = () => {
                           >
                             <Edit className="h-4 w-4 mr-2" />
                             Edit
+                          </Button>
+                          <Button 
+                            onClick={() => handleDeleteItem(item)}
+                            variant="destructive" 
+                            className="w-full"
+                            size="sm"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
                           </Button>
                         </div>
                       </div>
