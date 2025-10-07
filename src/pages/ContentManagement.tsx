@@ -74,12 +74,47 @@ const ContentManagement = () => {
         );
       }
 
+      // Check if this is a color field
+      const isColorField = key.toLowerCase().includes('color');
+      
       return (
         <div key={pathString} className="space-y-2">
           <Label htmlFor={pathString} className="capitalize">
             {key.replace(/_/g, ' ')}
           </Label>
-          {typeof value === 'string' && value.length > 100 ? (
+          {isColorField ? (
+            <div className="flex gap-2">
+              <input
+                type="color"
+                value={typeof value === 'string' && value.startsWith('#') ? value : '#cccccc'}
+                onChange={(e) => {
+                  const newContent = { ...editingContent };
+                  let current = newContent;
+                  for (let i = 0; i < currentPath.length - 1; i++) {
+                    current = current[currentPath[i]];
+                  }
+                  current[key] = e.target.value;
+                  setEditingContent({ ...newContent });
+                }}
+                className="w-12 h-10 rounded border-2 border-border cursor-pointer"
+              />
+              <Input
+                id={pathString}
+                value={value as string}
+                onChange={(e) => {
+                  const newContent = { ...editingContent };
+                  let current = newContent;
+                  for (let i = 0; i < currentPath.length - 1; i++) {
+                    current = current[currentPath[i]];
+                  }
+                  current[key] = e.target.value;
+                  setEditingContent({ ...newContent });
+                }}
+                placeholder="e.g., #ff0000 or rgb(255,0,0)"
+                className="font-mono"
+              />
+            </div>
+          ) : typeof value === 'string' && value.length > 100 ? (
             <Textarea
               id={pathString}
               value={value as string}

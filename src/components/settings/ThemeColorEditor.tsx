@@ -80,31 +80,82 @@ export const ThemeColorEditor = ({ settings, onUpdate }: ThemeColorEditorProps) 
     });
   };
 
-  const hslToHex = (hsl: string) => {
-    const [h, s, l] = hsl.split(' ').map(v => parseFloat(v));
-    const hDecimal = h / 360;
-    const sDecimal = s / 100;
-    const lDecimal = l / 100;
+  const parseColorToHex = (color: string): string => {
+    color = color.trim();
     
-    const c = (1 - Math.abs(2 * lDecimal - 1)) * sDecimal;
-    const x = c * (1 - Math.abs((hDecimal * 6) % 2 - 1));
-    const m = lDecimal - c / 2;
+    // If it's already hex, return it
+    if (color.startsWith('#')) return color;
     
-    let r = 0, g = 0, b = 0;
+    // Try to parse HSL format: "hue saturation% lightness%"
+    const hslMatch = color.match(/^(\d+\.?\d*)\s+(\d+\.?\d*)%?\s+(\d+\.?\d*)%?$/);
+    if (hslMatch) {
+      const [, h, s, l] = hslMatch;
+      const hDecimal = parseFloat(h) / 360;
+      const sDecimal = parseFloat(s) / 100;
+      const lDecimal = parseFloat(l) / 100;
+      
+      const c = (1 - Math.abs(2 * lDecimal - 1)) * sDecimal;
+      const x = c * (1 - Math.abs((hDecimal * 6) % 2 - 1));
+      const m = lDecimal - c / 2;
+      
+      let r = 0, g = 0, b = 0;
+      
+      if (hDecimal < 1/6) { r = c; g = x; }
+      else if (hDecimal < 2/6) { r = x; g = c; }
+      else if (hDecimal < 3/6) { g = c; b = x; }
+      else if (hDecimal < 4/6) { g = x; b = c; }
+      else if (hDecimal < 5/6) { r = x; b = c; }
+      else { r = c; b = x; }
+      
+      const toHex = (n: number) => {
+        const hex = Math.round((n + m) * 255).toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+      };
+      
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    }
     
-    if (hDecimal < 1/6) { r = c; g = x; }
-    else if (hDecimal < 2/6) { r = x; g = c; }
-    else if (hDecimal < 3/6) { g = c; b = x; }
-    else if (hDecimal < 4/6) { g = x; b = c; }
-    else if (hDecimal < 5/6) { r = x; b = c; }
-    else { r = c; b = x; }
+    // Try to parse RGB format: "r g b" or "rgb(r, g, b)"
+    const rgbMatch = color.match(/rgba?\(?\s*(\d+)\s*,?\s*(\d+)\s*,?\s*(\d+)/i) || 
+                     color.match(/^(\d+)\s+(\d+)\s+(\d+)$/);
+    if (rgbMatch) {
+      const [, r, g, b] = rgbMatch;
+      const toHex = (n: string) => {
+        const hex = parseInt(n).toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+      };
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    }
     
-    const toHex = (n: number) => {
-      const hex = Math.round((n + m) * 255).toString(16);
-      return hex.length === 1 ? '0' + hex : hex;
-    };
+    // Fallback: return a default color
+    return '#cccccc';
+  };
+
+  const hexToHsl = (hex: string): string => {
+    const r = parseInt(hex.slice(1, 3), 16) / 255;
+    const g = parseInt(hex.slice(3, 5), 16) / 255;
+    const b = parseInt(hex.slice(5, 7), 16) / 255;
     
-    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+    
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+        case g: h = ((b - r) / d + 2) / 6; break;
+        case b: h = ((r - g) / d + 4) / 6; break;
+      }
+    }
+    
+    h = Math.round(h * 360);
+    s = Math.round(s * 100);
+    l = Math.round(l * 100);
+    
+    return `${h} ${s}% ${l}%`;
   };
 
   const colorFields = [
@@ -142,15 +193,17 @@ export const ThemeColorEditor = ({ settings, onUpdate }: ThemeColorEditorProps) 
               <Label htmlFor={key}>{label}</Label>
               <p className="text-xs text-muted-foreground">{description}</p>
               <div className="flex gap-2">
-                <div 
-                  className="w-12 h-10 rounded border-2 border-border flex-shrink-0"
-                  style={{ backgroundColor: hslToHex(colors[key as keyof typeof colors]) }}
+                <input
+                  type="color"
+                  value={parseColorToHex(colors[key as keyof typeof colors])}
+                  onChange={(e) => handleColorChange(key, hexToHsl(e.target.value))}
+                  className="w-12 h-10 rounded border-2 border-border flex-shrink-0 cursor-pointer"
                 />
                 <Input
                   id={key}
                   value={colors[key as keyof typeof colors]}
                   onChange={(e) => handleColorChange(key, e.target.value)}
-                  placeholder="e.g., 222.2 84% 4.9%"
+                  placeholder="HSL: 222.2 84% 4.9% or RGB: 255 0 0"
                   className="font-mono text-sm"
                 />
               </div>
@@ -162,10 +215,13 @@ export const ThemeColorEditor = ({ settings, onUpdate }: ThemeColorEditorProps) 
           <div className="bg-muted p-4 rounded-lg space-y-2">
             <h4 className="font-semibold text-sm">Color Format Guide</h4>
             <p className="text-xs text-muted-foreground">
-              Use HSL format: <code className="bg-background px-1 py-0.5 rounded">hue saturation% lightness%</code>
+              HSL format: <code className="bg-background px-1 py-0.5 rounded">346.8 77.2% 49.8%</code> (hue saturation% lightness%)
             </p>
             <p className="text-xs text-muted-foreground">
-              Example: <code className="bg-background px-1 py-0.5 rounded">346.8 77.2% 49.8%</code> creates a red color
+              RGB format: <code className="bg-background px-1 py-0.5 rounded">255 0 0</code> or <code className="bg-background px-1 py-0.5 rounded">rgb(255, 0, 0)</code>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Or use the color picker for easy selection
             </p>
           </div>
         </div>

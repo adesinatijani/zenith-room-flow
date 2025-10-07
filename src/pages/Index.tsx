@@ -192,18 +192,31 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative h-screen min-h-[500px] flex items-center justify-center overflow-hidden">
+      <section 
+        className="relative h-screen min-h-[500px] flex items-center justify-center overflow-hidden"
+        style={{
+          background: pageContent?.hero?.background_color || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+        }}
+      >
         <img 
           src={heroImage} 
           alt="Luxury hotel lobby interior" 
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover mix-blend-overlay"
           loading="eager"
         />
-        <div className="absolute inset-0 luxury-gradient opacity-80"></div>
-        <div className="relative z-10 text-center text-primary-foreground max-w-4xl mx-auto px-4">
+        <div className="absolute inset-0 bg-black/40"></div>
+        <div 
+          className="relative z-10 text-center max-w-4xl mx-auto px-4"
+          style={{ color: pageContent?.hero?.text_color || '#ffffff' }}
+        >
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-4 sm:mb-6">
             {pageContent?.hero?.title || "Experience"}
-            <span className="block text-accent">Luxury</span>
+            <span 
+              className="block"
+              style={{ color: pageContent?.hero?.accent_color || '#fbbf24' }}
+            >
+              Luxury
+            </span>
           </h1>
           <p className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 sm:mb-8 opacity-90">
             {pageContent?.hero?.subtitle || "World-class amenities, exceptional service, and unforgettable memories await you"}
@@ -215,7 +228,13 @@ const Index = () => {
                 <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
               </a>
             </Button>
-            <Button size="lg" variant="outline" className="text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 bg-white/10 border-white/30 text-white hover:bg-white/20 touch-target" asChild>
+            <Button size="lg" variant="outline" className="text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 bg-white/10 border-white/30 hover:bg-white/20 touch-target" 
+              style={{ 
+                color: pageContent?.hero?.text_color || '#ffffff',
+                borderColor: `${pageContent?.hero?.text_color || '#ffffff'}50`
+              }}
+              asChild
+            >
               <a href="/rooms">
                 Explore Rooms
               </a>
