@@ -91,11 +91,11 @@ export const useHotelSettings = () => {
       const { data, error } = await supabase
         .from("hotel_settings")
         .select("*")
-        .single();
+        .maybeSingle();
 
       console.log("Fetched hotel settings:", data);
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         throw error;
       }
 
@@ -139,7 +139,7 @@ export const useHotelSettings = () => {
       const { data: existingData } = await supabase
         .from("hotel_settings")
         .select("id")
-        .single();
+        .maybeSingle();
 
       let result;
       if (existingData) {

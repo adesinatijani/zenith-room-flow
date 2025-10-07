@@ -144,9 +144,35 @@ const InventoryTemplateModal = ({ isOpen, onClose, onImportData }: InventoryTemp
           return categoryLower.includes('drink') ? 'beverages' : 'office';
         };
 
+        // Normalize unit values to lowercase and map common variations
+        const normalizeUnit = (unit: string): string => {
+          const unitLower = unit?.toLowerCase().trim() || 'pieces';
+          
+          // Map common variations to standard units
+          const unitMap: Record<string, string> = {
+            'packet': 'packets',
+            'piece': 'pieces',
+            'unit': 'units',
+            'bottle': 'bottles',
+            'can': 'cans',
+            'box': 'boxes',
+            'roll': 'rolls',
+            'pack': 'packs',
+            'carton': 'cartons',
+            'kilogram': 'kg',
+            'gram': 'g',
+            'liter': 'liters',
+            'milliliter': 'ml',
+          };
+
+          return unitMap[unitLower] || unitLower;
+        };
+
         const processedData = jsonData.map((row: any) => {
           const rawCategory = row.category || row['Category'] || 'office';
           const mappedCategory = mapCategory(rawCategory);
+          const rawUnit = row.unit || row['Unit'] || 'pieces';
+          const normalizedUnit = normalizeUnit(rawUnit);
           
           return {
             item_name: row.item_name || row['Item Name'] || '',
@@ -154,7 +180,7 @@ const InventoryTemplateModal = ({ isOpen, onClose, onImportData }: InventoryTemp
             current_quantity: Number(row.current_quantity || row['Current Quantity'] || 0),
             min_threshold: Number(row.min_threshold || row['Min Threshold'] || 10),
             max_threshold: Number(row.max_threshold || row['Max Threshold'] || 100),
-            unit: row.unit || row['Unit'] || 'pieces',
+            unit: normalizedUnit,
             cost_per_unit: Number(row.cost_per_unit || row['Cost Per Unit'] || 0),
             supplier: row.supplier || row['Supplier'] || ''
           };
