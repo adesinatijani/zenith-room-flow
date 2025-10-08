@@ -1,0 +1,8 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/qkfjefmc/app.whihs.com.ng
+    - /bin/rm -rf $DEPLOYPATH/*
+    - npm install
+    - npm run build
+    - /bin/cp -R build/* $DEPLOYPATH
