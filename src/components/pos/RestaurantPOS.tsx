@@ -88,6 +88,7 @@ const RestaurantPOS = () => {
     "Beer": { name: "BEER", icon: Coffee, color: "bg-yellow-500 hover:bg-yellow-600" },
     "beer": { name: "BEER", icon: Coffee, color: "bg-yellow-500 hover:bg-yellow-600" },
     "wine": { name: "WINE", icon: Wine, color: "bg-red-600 hover:bg-red-700" },
+    "Beverages": { name: "BEVERAGES", icon: Coffee, color: "bg-cyan-500 hover:bg-cyan-600" },
     "Non-Alcoholic Beverages": { name: "SOFT DRINKS", icon: Coffee, color: "bg-green-500 hover:bg-green-600" },
     "Hot Beverages": { name: "HOT DRINKS", icon: Coffee, color: "bg-brown-500 hover:bg-brown-600" },
     "hot beverages": { name: "HOT DRINKS", icon: Coffee, color: "bg-brown-500 hover:bg-brown-600" },
