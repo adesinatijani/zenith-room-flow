@@ -131,6 +131,39 @@ export const useMenuItemsDB = () => {
 
   useEffect(() => {
     fetchMenuItems();
+
+    // Subscribe to real-time changes for menu_items
+    const channel = supabase
+      .channel('menu-items-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'menu_items'
+        },
+        (payload) => {
+          console.log('Menu item change detected:', payload);
+          if (payload.eventType === 'INSERT') {
+            setMenuItems(current => [...current, payload.new as MenuItem]);
+          } else if (payload.eventType === 'UPDATE') {
+            setMenuItems(current => 
+              current.map(item => 
+                item.id === payload.new.id ? payload.new as MenuItem : item
+              )
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setMenuItems(current => 
+              current.filter(item => item.id !== payload.old.id)
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return {
