@@ -61,7 +61,7 @@ const MenuManagement = () => {
   const categories = [
     "Appetizers", "Main Course", "Desserts", "Salads", "Soups", "Sides",
     "Red Wine", "White Wine", "Rosé Wine", "Sparkling Wine", "Cocktails", 
-    "Spirits", "Beer", "Non-Alcoholic Beverages", "Hot Beverages"
+    "Spirits", "Beer", "Non-Alcoholic Beverages", "Hot Beverages", "Beverages"
   ];
 
   const allergens = [
@@ -69,7 +69,7 @@ const MenuManagement = () => {
   ];
 
   // Separate kitchen items from drinks (match database categories)
-  const drinkCategories = ['soft drinks', 'alcoholic beverages', 'spirits', 'hot beverages', 'beer', 'wine', 'liquor', 'juice', 'water', 'energy drinks', 'cocktails', 'drinks'];
+  const drinkCategories = ['soft drinks', 'alcoholic beverages', 'spirits', 'hot beverages', 'beer', 'wine', 'liquor', 'juice', 'water', 'energy drinks', 'cocktails', 'drinks', 'beverages'];
   
   const kitchenItems = menuItems.filter(item => !drinkCategories.includes(item.category.toLowerCase()));
   const drinkItems = menuItems.filter(item => drinkCategories.includes(item.category.toLowerCase()));
