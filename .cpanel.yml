@@ -2,7 +2,9 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/qkfjefmc/app.whihs.com.ng
-    - /bin/rm -rf $DEPLOYPATH/*
+    - echo "Starting deployment to $DEPLOYPATH"
     - npm install
     - npm run build
+    - echo "Copying build files..."
     - /bin/cp -R build/* $DEPLOYPATH
+    - echo "✅ Deployment completed successfully!"
