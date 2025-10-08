@@ -3,15 +3,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, UserPlus, Shield, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Users, UserPlus, Shield, Edit } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Profile {
@@ -19,10 +19,13 @@ interface Profile {
   first_name?: string;
   last_name?: string;
   phone?: string;
-  role: string;
   department?: string;
   is_active: boolean;
   created_at: string;
+}
+
+interface UserRole {
+  role: string;
 }
 
 const HOTEL_ROLES = [
@@ -42,13 +45,13 @@ const HOTEL_ROLES = [
 export default function UserManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     firstName: '',
     lastName: '',
     phone: '',
-    role: '',
     department: '',
   });
   
@@ -69,8 +72,30 @@ export default function UserManagement() {
     },
   });
 
+  const { data: userRoles = {} } = useQuery({
+    queryKey: ['user_roles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+      
+      if (error) throw error;
+      
+      // Group roles by user_id
+      const rolesMap: Record<string, string[]> = {};
+      data.forEach((ur: any) => {
+        if (!rolesMap[ur.user_id]) {
+          rolesMap[ur.user_id] = [];
+        }
+        rolesMap[ur.user_id].push(ur.role);
+      });
+      
+      return rolesMap;
+    },
+  });
+
   const createUserMutation = useMutation({
-    mutationFn: async (userData: typeof formData) => {
+    mutationFn: async (userData: typeof formData & { roles: string[] }) => {
       // Create auth user first
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: userData.email,
@@ -88,16 +113,31 @@ export default function UserManagement() {
         .from('profiles')
         .update({
           phone: userData.phone,
-          role: userData.role,
           department: userData.department,
         })
         .eq('id', authData.user.id);
 
       if (profileError) throw profileError;
+
+      // Insert roles into user_roles table
+      if (userData.roles.length > 0) {
+        const roleInserts = userData.roles.map(role => ({
+          user_id: authData.user.id,
+          role: role as any
+        }));
+
+        const { error: rolesError } = await supabase
+          .from('user_roles')
+          .insert(roleInserts);
+
+        if (rolesError) throw rolesError;
+      }
+
       return authData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['user_roles'] });
       setIsDialogOpen(false);
       resetForm();
       toast({
@@ -115,17 +155,42 @@ export default function UserManagement() {
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<Profile> }) => {
-      const { error } = await supabase
+    mutationFn: async ({ id, profileData, roles }: { id: string; profileData: Partial<Profile>; roles: string[] }) => {
+      // Update profile
+      const { error: profileError } = await supabase
         .from('profiles')
-        .update(data)
+        .update(profileData)
         .eq('id', id);
       
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Delete existing roles
+      const { error: deleteError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', id);
+
+      if (deleteError) throw deleteError;
+
+      // Insert new roles
+      if (roles.length > 0) {
+        const roleInserts = roles.map(role => ({
+          user_id: id,
+          role: role as any
+        }));
+
+        const { error: rolesError } = await supabase
+          .from('user_roles')
+          .insert(roleInserts);
+
+        if (rolesError) throw rolesError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['user_roles'] });
       setEditingUser(null);
+      setIsDialogOpen(false);
       toast({
         title: 'Success',
         description: 'User updated successfully',
@@ -141,10 +206,24 @@ export default function UserManagement() {
   });
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
-    updateUserMutation.mutate({
-      id: userId,
-      data: { is_active: !currentStatus }
-    });
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_active: !currentStatus })
+      .eq('id', userId);
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } else {
+      queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      toast({
+        title: 'Success',
+        description: 'User status updated',
+      });
+    }
   };
 
   const resetForm = () => {
@@ -154,26 +233,36 @@ export default function UserManagement() {
       firstName: '',
       lastName: '',
       phone: '',
-      role: '',
       department: '',
     });
+    setSelectedRoles([]);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (selectedRoles.length === 0) {
+      toast({
+        title: 'Error',
+        description: 'Please select at least one role',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (editingUser) {
       updateUserMutation.mutate({
         id: editingUser.id,
-        data: {
+        profileData: {
           first_name: formData.firstName,
           last_name: formData.lastName,
           phone: formData.phone,
-          role: formData.role,
           department: formData.department,
-        }
+        },
+        roles: selectedRoles
       });
     } else {
-      createUserMutation.mutate(formData);
+      createUserMutation.mutate({ ...formData, roles: selectedRoles });
     }
   };
 
@@ -185,10 +274,18 @@ export default function UserManagement() {
       firstName: user.first_name || '',
       lastName: user.last_name || '',
       phone: user.phone || '',
-      role: user.role,
       department: user.department || '',
     });
+    setSelectedRoles(userRoles[user.id] || []);
     setIsDialogOpen(true);
+  };
+
+  const toggleRole = (roleValue: string) => {
+    setSelectedRoles(prev => 
+      prev.includes(roleValue)
+        ? prev.filter(r => r !== roleValue)
+        : [...prev, roleValue]
+    );
   };
 
   const getRoleBadge = (role: string) => {
@@ -303,19 +400,24 @@ export default function UserManagement() {
               </div>
 
               <div>
-                <Label htmlFor="role">Role</Label>
-                <Select value={formData.role} onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {HOTEL_ROLES.map((role) => (
-                      <SelectItem key={role.value} value={role.value}>
+                <Label>Roles (Select one or more)</Label>
+                <div className="grid grid-cols-2 gap-3 mt-2 max-h-60 overflow-y-auto border rounded-md p-3">
+                  {HOTEL_ROLES.map((role) => (
+                    <div key={role.value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={role.value}
+                        checked={selectedRoles.includes(role.value)}
+                        onCheckedChange={() => toggleRole(role.value)}
+                      />
+                      <label
+                        htmlFor={role.value}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
                         {role.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      </label>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div>
@@ -356,7 +458,7 @@ export default function UserManagement() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Role</TableHead>
+                <TableHead>Roles</TableHead>
                 <TableHead>Department</TableHead>
                 <TableHead>Phone</TableHead>
                 <TableHead>Status</TableHead>
@@ -370,7 +472,11 @@ export default function UserManagement() {
                   <TableCell className="font-medium">
                     {profile.first_name} {profile.last_name}
                   </TableCell>
-                  <TableCell>{getRoleBadge(profile.role)}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {userRoles[profile.id]?.map(role => getRoleBadge(role)) || <span className="text-muted-foreground">No roles</span>}
+                    </div>
+                  </TableCell>
                   <TableCell>{profile.department || '-'}</TableCell>
                   <TableCell>{profile.phone || '-'}</TableCell>
                   <TableCell>
