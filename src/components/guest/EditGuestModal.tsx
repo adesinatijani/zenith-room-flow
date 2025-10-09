@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useGuestsDB } from "@/hooks/useGuestsDB";
 import { Edit, X } from "lucide-react";
 
 interface EditGuestModalProps {
@@ -23,7 +24,7 @@ interface Guest {
   phone: string;
   address: string;
   nationality: string;
-  loyaltyTier: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
+  loyalty_tier: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
   status: 'active' | 'vip' | 'blacklisted';
   preferences: string[];
   notes: string;
@@ -31,6 +32,7 @@ interface Guest {
 
 const EditGuestModal = ({ open, onOpenChange, guestId, guestName }: EditGuestModalProps) => {
   const { toast } = useToast();
+  const { getGuestById, updateGuest } = useGuestsDB();
   const [formData, setFormData] = useState<Guest>({
     id: "",
     name: "",
@@ -38,45 +40,60 @@ const EditGuestModal = ({ open, onOpenChange, guestId, guestName }: EditGuestMod
     phone: "",
     address: "",
     nationality: "",
-    loyaltyTier: 'Bronze',
+    loyalty_tier: 'Bronze',
     status: 'active',
     preferences: [],
     notes: ""
   });
   const [newPreference, setNewPreference] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Mock data - in real app this would fetch from database
   useEffect(() => {
     if (open && guestId) {
-      // Simulate fetching guest data
-      setFormData({
-        id: guestId,
-        name: guestName,
-        email: "john.smith@email.com",
-        phone: "+1 (555) 123-4567",
-        address: "123 Main St, New York, NY 10001",
-        nationality: "USA",
-        loyaltyTier: 'Gold',
-        status: 'vip',
-        preferences: ["Non-smoking", "High floor", "City view"],
-        notes: "Prefers late checkout, vegetarian meals"
-      });
+      const guest = getGuestById(guestId);
+      if (guest) {
+        setFormData({
+          id: guest.id,
+          name: guest.name,
+          email: guest.email || "",
+          phone: guest.phone || "",
+          address: guest.address || "",
+          nationality: guest.nationality || "",
+          loyalty_tier: guest.loyalty_tier,
+          status: guest.status,
+          preferences: guest.preferences || [],
+          notes: guest.notes || ""
+        });
+      }
     }
-  }, [open, guestId, guestName]);
+  }, [open, guestId, getGuestById]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
-    // Here you would typically save to database
-    toast({
-      title: "Profile Updated",
-      description: `${formData.name}'s profile has been updated successfully`,
-    });
-    
-    onOpenChange(false);
+    try {
+      await updateGuest(guestId, {
+        name: formData.name,
+        email: formData.email || undefined,
+        phone: formData.phone || undefined,
+        address: formData.address || undefined,
+        nationality: formData.nationality || undefined,
+        loyalty_tier: formData.loyalty_tier,
+        status: formData.status,
+        preferences: formData.preferences,
+        notes: formData.notes || undefined
+      });
+      
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Failed to update guest:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleInputChange = (field: keyof Guest, value: any) => {
+  const handleInputChange = (field: keyof Guest, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -165,7 +182,7 @@ const EditGuestModal = ({ open, onOpenChange, guestId, guestName }: EditGuestMod
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="edit-loyalty">Loyalty Tier</Label>
-              <Select value={formData.loyaltyTier} onValueChange={(value) => handleInputChange("loyaltyTier", value)}>
+              <Select value={formData.loyalty_tier} onValueChange={(value) => handleInputChange("loyalty_tier", value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -229,11 +246,11 @@ const EditGuestModal = ({ open, onOpenChange, guestId, guestName }: EditGuestMod
           </div>
           
           <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type="submit" className="button-luxury">
-              Save Changes
+            <Button type="submit" className="button-luxury" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </form>

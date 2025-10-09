@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 
 interface LiveDashboardModalProps {
   open: boolean;
@@ -11,6 +12,8 @@ interface LiveDashboardModalProps {
 }
 
 const LiveDashboardModal = ({ open, onOpenChange }: LiveDashboardModalProps) => {
+  const { formatCurrency } = useGlobalSettings();
+  
   const [liveStats, setLiveStats] = useState({
     currentMembers: 24,
     equipmentInUse: 18,
@@ -120,7 +123,7 @@ const LiveDashboardModal = ({ open, onOpenChange }: LiveDashboardModalProps) => 
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Revenue Today</p>
-                  <p className="text-2xl font-bold text-green-600">${liveStats.revenueToday}</p>
+                  <p className="text-2xl font-bold text-green-600">{formatCurrency(liveStats.revenueToday)}</p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-green-500" />
               </div>

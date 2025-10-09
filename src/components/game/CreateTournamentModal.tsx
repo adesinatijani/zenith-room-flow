@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -39,6 +40,7 @@ interface TournamentFormData {
 }
 
 const CreateTournamentModal = ({ open, onOpenChange }: CreateTournamentModalProps) => {
+  const { formatCurrency } = useGlobalSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<TournamentFormData>({
@@ -197,7 +199,7 @@ const CreateTournamentModal = ({ open, onOpenChange }: CreateTournamentModalProp
                 }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Entry Fee ($)</FormLabel>
+                    <FormLabel>Entry Fee</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
@@ -221,7 +223,7 @@ const CreateTournamentModal = ({ open, onOpenChange }: CreateTournamentModalProp
                 }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Prize Pool ($)</FormLabel>
+                    <FormLabel>Prize Pool</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 

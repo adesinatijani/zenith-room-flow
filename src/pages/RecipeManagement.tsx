@@ -20,9 +20,11 @@ import AddRecipeModal from "@/components/recipe/AddRecipeModal";
 import EditRecipeModal from "@/components/recipe/EditRecipeModal";
 import DeleteRecipeModal from "@/components/recipe/DeleteRecipeModal";
 import { useRecipesDB } from "@/hooks/useRecipesDB";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 
 const RecipeManagement = () => {
   const { recipes, loading, addRecipe, updateRecipe, deleteRecipe } = useRecipesDB();
+  const { formatCurrency } = useGlobalSettings();
   
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -211,7 +213,7 @@ const RecipeManagement = () => {
             <div className="flex items-center gap-3">
               <DollarSign className="h-8 w-8 text-green-600" />
               <div>
-                <p className="text-2xl font-bold">$13.63</p>
+                <p className="text-2xl font-bold">{formatCurrency(13.63)}</p>
                 <p className="text-sm text-muted-foreground">Avg Cost</p>
               </div>
             </div>

@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useHotelSettings } from "@/hooks/useHotelSettings";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import { UserProfileModal } from "@/components/profile/UserProfileModal";
 import { UserSettingsModal } from "@/components/settings/UserSettingsModal";
 import { SupportModal } from "@/components/support/SupportModal";
@@ -20,6 +21,7 @@ import { SupportModal } from "@/components/support/SupportModal";
 export const Header = () => {
   const { profile, signOut } = useAuth();
   const { settings } = useHotelSettings();
+  const { formatCurrency } = useGlobalSettings();
   const [showProfile, setShowProfile] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showSupport, setShowSupport] = useState(false);
@@ -55,7 +57,7 @@ export const Header = () => {
               <DropdownMenuItem className="p-4">
                 <div className="space-y-1">
                   <p className="text-sm font-medium">New order from Table 5</p>
-                  <p className="text-xs text-muted-foreground">2 minutes ago • $45.50</p>
+                  <p className="text-xs text-muted-foreground">2 minutes ago • {formatCurrency(45.50)}</p>
                 </div>
               </DropdownMenuItem>
               <DropdownMenuItem className="p-4">

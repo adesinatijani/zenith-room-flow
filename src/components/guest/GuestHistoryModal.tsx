@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import { Calendar, Clock, CreditCard, MapPin, Star } from "lucide-react";
 
 interface GuestHistoryModalProps {
@@ -20,6 +21,8 @@ interface BookingRecord {
 }
 
 const GuestHistoryModal = ({ open, onOpenChange, guestName }: GuestHistoryModalProps) => {
+  const { formatCurrency } = useGlobalSettings();
+  
   // Mock data - in real app this would come from database
   const bookingHistory: BookingRecord[] = [
     {
@@ -87,7 +90,7 @@ const GuestHistoryModal = ({ open, onOpenChange, guestName }: GuestHistoryModalP
             </Card>
             <Card className="card-luxury">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold">${totalSpent.toLocaleString()}</div>
+                <div className="text-2xl font-bold">{formatCurrency(totalSpent)}</div>
                 <p className="text-sm text-muted-foreground">Total Spent</p>
               </CardContent>
             </Card>
@@ -122,7 +125,7 @@ const GuestHistoryModal = ({ open, onOpenChange, guestName }: GuestHistoryModalP
                       <Badge className={getStatusColor(booking.status)}>
                         {booking.status.toUpperCase()}
                       </Badge>
-                      <p className="text-lg font-bold mt-1">${booking.amount}</p>
+                      <p className="text-lg font-bold mt-1">{formatCurrency(booking.amount)}</p>
                     </div>
                   </div>
                   

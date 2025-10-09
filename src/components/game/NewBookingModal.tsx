@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -36,6 +37,7 @@ interface BookingFormData {
 }
 
 const NewBookingModal = ({ open, onOpenChange }: NewBookingModalProps) => {
+  const { formatCurrency } = useGlobalSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<BookingFormData>({
@@ -136,7 +138,7 @@ const NewBookingModal = ({ open, onOpenChange }: NewBookingModalProps) => {
                     <SelectContent>
                       {availableStations.map((station) => (
                         <SelectItem key={station.id} value={station.id}>
-                          {station.name} - ${station.rate}/hour ({station.status})
+                          {station.name} - {formatCurrency(station.rate)}/hour ({station.status})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -217,7 +219,7 @@ const NewBookingModal = ({ open, onOpenChange }: NewBookingModalProps) => {
                   </div>
                   <div className="flex justify-between">
                     <span>Rate:</span>
-                    <span>${selectedStation.rate}/hour</span>
+                    <span>{formatCurrency(selectedStation.rate)}/hour</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Duration:</span>
@@ -225,7 +227,7 @@ const NewBookingModal = ({ open, onOpenChange }: NewBookingModalProps) => {
                   </div>
                   <div className="flex justify-between font-medium">
                     <span>Total Amount:</span>
-                    <span>${totalAmount.toFixed(2)}</span>
+                    <span>{formatCurrency(totalAmount)}</span>
                   </div>
                 </div>
               </div>

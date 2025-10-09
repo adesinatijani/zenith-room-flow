@@ -39,6 +39,10 @@ export interface HotelSettings {
   };
   two_factor_enabled: boolean;
   session_timeout: number;
+  loyalty_bronze_threshold?: number;
+  loyalty_silver_threshold?: number;
+  loyalty_gold_threshold?: number;
+  loyalty_platinum_threshold?: number;
 }
 
 const defaultSettings: HotelSettings = {
@@ -77,6 +81,10 @@ const defaultSettings: HotelSettings = {
   },
   two_factor_enabled: false,
   session_timeout: 30,
+  loyalty_bronze_threshold: 0,
+  loyalty_silver_threshold: 2000,
+  loyalty_gold_threshold: 5000,
+  loyalty_platinum_threshold: 10000,
 };
 
 export const useHotelSettings = () => {

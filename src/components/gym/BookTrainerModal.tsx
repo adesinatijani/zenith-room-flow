@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import { useToast } from "@/hooks/use-toast";
 
 interface Trainer {
@@ -27,6 +28,7 @@ interface BookTrainerModalProps {
 
 const BookTrainerModal = ({ open, onOpenChange, selectedTrainer }: BookTrainerModalProps) => {
   const { toast } = useToast();
+  const { formatCurrency } = useGlobalSettings();
   
   const [bookingData, setBookingData] = useState({
     trainerId: selectedTrainer?.id || "",
@@ -98,7 +100,7 @@ const BookTrainerModal = ({ open, onOpenChange, selectedTrainer }: BookTrainerMo
 
     toast({
       title: "Session Booked Successfully",
-      description: `Training session with ${trainer?.name} booked for ${bookingData.date} at ${bookingData.time}. Total cost: $${totalCost}`,
+      description: `Training session with ${trainer?.name} booked for ${bookingData.date} at ${bookingData.time}. Total cost: ${formatCurrency(totalCost)}`,
     });
 
     // Reset form
@@ -158,7 +160,7 @@ const BookTrainerModal = ({ open, onOpenChange, selectedTrainer }: BookTrainerMo
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-semibold">${trainer.hourlyRate}/hr</div>
+                        <div className="font-semibold">{formatCurrency(trainer.hourlyRate)}/hr</div>
                         <Badge variant="secondary" className="text-xs">Available</Badge>
                       </div>
                     </div>
@@ -283,12 +285,12 @@ const BookTrainerModal = ({ open, onOpenChange, selectedTrainer }: BookTrainerMo
                   </div>
                   <div className="flex justify-between">
                     <span>Rate:</span>
-                    <span>${selectedTrainerData.hourlyRate}/hour</span>
+                    <span>{formatCurrency(selectedTrainerData.hourlyRate)}/hour</span>
                   </div>
                   <hr />
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total Cost:</span>
-                    <span>${totalCost.toFixed(2)}</span>
+                    <span>{formatCurrency(totalCost)}</span>
                   </div>
                 </CardContent>
               </Card>

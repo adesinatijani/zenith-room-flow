@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useGuestsDB } from "@/hooks/useGuestsDB";
 import { UserPlus } from "lucide-react";
 
 interface AddGuestModalProps {
@@ -15,6 +16,7 @@ interface AddGuestModalProps {
 
 const AddGuestModal = ({ open, onOpenChange }: AddGuestModalProps) => {
   const { toast } = useToast();
+  const { addGuest } = useGuestsDB();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -22,29 +24,53 @@ const AddGuestModal = ({ open, onOpenChange }: AddGuestModalProps) => {
     nationality: "",
     address: "",
     preferences: "",
-    notes: ""
+    notes: "",
+    status: "active" as const,
+    loyalty_tier: "Bronze" as const
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
-    // Here you would typically save to database
-    toast({
-      title: "Guest Added Successfully",
-      description: `${formData.name} has been registered as a new guest`,
-    });
-    
-    // Reset form and close modal
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      nationality: "",
-      address: "",
-      preferences: "",
-      notes: ""
-    });
-    onOpenChange(false);
+    try {
+      // Convert preferences string to array
+      const preferencesArray = formData.preferences
+        .split(',')
+        .map(p => p.trim())
+        .filter(p => p.length > 0);
+
+      await addGuest({
+        name: formData.name,
+        email: formData.email || undefined,
+        phone: formData.phone || undefined,
+        nationality: formData.nationality || undefined,
+        address: formData.address || undefined,
+        preferences: preferencesArray,
+        notes: formData.notes || undefined,
+        status: formData.status,
+        loyalty_tier: formData.loyalty_tier
+      });
+      
+      // Reset form and close modal
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        nationality: "",
+        address: "",
+        preferences: "",
+        notes: "",
+        status: "active",
+        loyalty_tier: "Bronze"
+      });
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Failed to add guest:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -143,11 +169,11 @@ const AddGuestModal = ({ open, onOpenChange }: AddGuestModalProps) => {
           </div>
           
           <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type="submit" className="button-luxury">
-              Add Guest
+            <Button type="submit" className="button-luxury" disabled={isSubmitting}>
+              {isSubmitting ? "Adding..." : "Add Guest"}
             </Button>
           </div>
         </form>

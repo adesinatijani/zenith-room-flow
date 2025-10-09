@@ -657,6 +657,214 @@ export type Database = {
         }
         Relationships: []
       }
+      game_bookings: {
+        Row: {
+          booking_date: string
+          created_at: string
+          duration_hours: number
+          id: string
+          payment_status: string
+          player_name: string
+          player_phone: string
+          special_requests: string | null
+          start_time: string
+          station_id: string
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          booking_date: string
+          created_at?: string
+          duration_hours: number
+          id?: string
+          payment_status?: string
+          player_name: string
+          player_phone: string
+          special_requests?: string | null
+          start_time: string
+          station_id: string
+          status?: string
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          booking_date?: string
+          created_at?: string
+          duration_hours?: number
+          id?: string
+          payment_status?: string
+          player_name?: string
+          player_phone?: string
+          special_requests?: string | null
+          start_time?: string
+          station_id?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_bookings_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "game_stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      game_sessions: {
+        Row: {
+          created_at: string
+          duration_hours: number | null
+          end_time: string | null
+          hourly_rate: number
+          id: string
+          payment_method: string | null
+          payment_status: string
+          player_name: string
+          player_phone: string | null
+          start_time: string
+          station_id: string
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          duration_hours?: number | null
+          end_time?: string | null
+          hourly_rate: number
+          id?: string
+          payment_method?: string | null
+          payment_status?: string
+          player_name: string
+          player_phone?: string | null
+          start_time?: string
+          station_id: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          duration_hours?: number | null
+          end_time?: string | null
+          hourly_rate?: number
+          id?: string
+          payment_method?: string | null
+          payment_status?: string
+          player_name?: string
+          player_phone?: string | null
+          start_time?: string
+          station_id?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_sessions_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "game_stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      game_stations: {
+        Row: {
+          created_at: string
+          current_session_id: string | null
+          equipment_specs: string | null
+          game_type: string
+          hourly_rate: number
+          id: string
+          location: string | null
+          station_name: string
+          station_number: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_session_id?: string | null
+          equipment_specs?: string | null
+          game_type: string
+          hourly_rate?: number
+          id?: string
+          location?: string | null
+          station_name: string
+          station_number: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_session_id?: string | null
+          equipment_specs?: string | null
+          game_type?: string
+          hourly_rate?: number
+          id?: string
+          location?: string | null
+          station_name?: string
+          station_number?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      game_tournaments: {
+        Row: {
+          created_at: string
+          current_participants: number
+          description: string | null
+          entry_fee: number
+          game_type: string
+          id: string
+          max_participants: number
+          prize_pool: number
+          rules: string | null
+          start_time: string
+          status: string
+          tournament_date: string
+          tournament_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_participants?: number
+          description?: string | null
+          entry_fee?: number
+          game_type: string
+          id?: string
+          max_participants?: number
+          prize_pool?: number
+          rules?: string | null
+          start_time: string
+          status?: string
+          tournament_date: string
+          tournament_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_participants?: number
+          description?: string | null
+          entry_fee?: number
+          game_type?: string
+          id?: string
+          max_participants?: number
+          prize_pool?: number
+          rules?: string | null
+          start_time?: string
+          status?: string
+          tournament_date?: string
+          tournament_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       guests: {
         Row: {
           address: string | null
@@ -1033,6 +1241,10 @@ export type Database = {
           id: string
           language: string
           logo_url: string | null
+          loyalty_bronze_threshold: number | null
+          loyalty_gold_threshold: number | null
+          loyalty_platinum_threshold: number | null
+          loyalty_silver_threshold: number | null
           notifications_enabled: boolean | null
           payment_gateways: Json | null
           primary_color: string | null
@@ -1072,6 +1284,10 @@ export type Database = {
           id?: string
           language?: string
           logo_url?: string | null
+          loyalty_bronze_threshold?: number | null
+          loyalty_gold_threshold?: number | null
+          loyalty_platinum_threshold?: number | null
+          loyalty_silver_threshold?: number | null
           notifications_enabled?: boolean | null
           payment_gateways?: Json | null
           primary_color?: string | null
@@ -1111,6 +1327,10 @@ export type Database = {
           id?: string
           language?: string
           logo_url?: string | null
+          loyalty_bronze_threshold?: number | null
+          loyalty_gold_threshold?: number | null
+          loyalty_platinum_threshold?: number | null
+          loyalty_silver_threshold?: number | null
           notifications_enabled?: boolean | null
           payment_gateways?: Json | null
           primary_color?: string | null
@@ -1125,6 +1345,68 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      housekeeping_tasks: {
+        Row: {
+          actual_duration: number | null
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          estimated_duration: number | null
+          id: string
+          notes: string | null
+          priority: string
+          room_id: string | null
+          started_at: string | null
+          status: string
+          task_type: string
+          updated_at: string
+        }
+        Insert: {
+          actual_duration?: number | null
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          estimated_duration?: number | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          room_id?: string | null
+          started_at?: string | null
+          status?: string
+          task_type: string
+          updated_at?: string
+        }
+        Update: {
+          actual_duration?: number | null
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          estimated_duration?: number | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          room_id?: string | null
+          started_at?: string | null
+          status?: string
+          task_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "housekeeping_tasks_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inventory: {
         Row: {
@@ -1170,6 +1452,65 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      inventory_issuances: {
+        Row: {
+          created_at: string
+          department: string | null
+          id: string
+          inventory_item_id: string
+          issued_at: string
+          issued_by: string | null
+          issued_to: string
+          notes: string | null
+          purpose: string
+          quantity_issued: number
+          room_number: string | null
+          status: string
+          total_cost: number
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          id?: string
+          inventory_item_id: string
+          issued_at?: string
+          issued_by?: string | null
+          issued_to: string
+          notes?: string | null
+          purpose: string
+          quantity_issued: number
+          room_number?: string | null
+          status?: string
+          total_cost?: number
+          unit_cost?: number
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          id?: string
+          inventory_item_id?: string
+          issued_at?: string
+          issued_by?: string | null
+          issued_to?: string
+          notes?: string | null
+          purpose?: string
+          quantity_issued?: number
+          room_number?: string | null
+          status?: string
+          total_cost?: number
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_issuances_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       kitchen_orders: {
         Row: {

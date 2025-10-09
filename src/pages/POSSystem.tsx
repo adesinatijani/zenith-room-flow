@@ -318,7 +318,6 @@ const POSSystem = () => {
       const subtotal = getGuestTotal(currentGuest);
       const tax = getTotalTax(subtotal);
       const total = subtotal + tax;
-      const currency = method === "MOBILE_MONEY" || method === "BANK" ? "₦" : "$";
       
       // Save order to database
       try {
@@ -402,7 +401,7 @@ const POSSystem = () => {
 
         toast({
           title: "Payment Successful",
-          description: `Payment of ${currency}${total.toFixed(2)} processed via ${method}`,
+          description: `Payment of ${formatCurrency(total)} processed via ${method}`,
         });
       } catch (error) {
         console.error('Failed to save order:', error);

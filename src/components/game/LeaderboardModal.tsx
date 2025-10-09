@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import { Trophy, Medal, Award } from "lucide-react";
 
 interface LeaderboardModalProps {
@@ -15,6 +16,8 @@ interface LeaderboardModalProps {
 }
 
 const LeaderboardModal = ({ open, onOpenChange }: LeaderboardModalProps) => {
+  const { formatCurrency } = useGlobalSettings();
+  
   const leaderboardData = [
     {
       rank: 1,
@@ -187,7 +190,7 @@ const LeaderboardModal = ({ open, onOpenChange }: LeaderboardModalProps) => {
             </Card>
             <Card>
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold">$2,340</div>
+                <div className="text-2xl font-bold">{formatCurrency(2340)}</div>
                 <div className="text-sm text-muted-foreground">Prize Money</div>
               </CardContent>
             </Card>

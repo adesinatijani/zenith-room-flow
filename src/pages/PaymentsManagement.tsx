@@ -435,11 +435,11 @@ ${payments.map(p =>
                     </div>
                     <div className="flex justify-between mb-2">
                       <span>Gateway Settlements</span>
-                      <span className="font-bold">$85.50</span>
+                      <span className="font-bold">{formatCurrency(85.50)}</span>
                     </div>
                     <div className="flex justify-between font-bold text-lg border-t pt-2">
                       <span>Total</span>
-                      <span>$1,735.50</span>
+                      <span>{formatCurrency(1735.50)}</span>
                     </div>
                   </div>
                 </div>

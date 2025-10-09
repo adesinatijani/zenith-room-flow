@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -41,6 +42,7 @@ interface SessionFormData {
 }
 
 const StartSessionModal = ({ open, onOpenChange, station }: StartSessionModalProps) => {
+  const { formatCurrency } = useGlobalSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<SessionFormData>({
@@ -207,7 +209,7 @@ const StartSessionModal = ({ open, onOpenChange, station }: StartSessionModalPro
                 </div>
                 <div className="flex justify-between">
                   <span>Rate:</span>
-                  <span>${station.hourlyRate}/hour</span>
+                  <span>{formatCurrency(station.hourlyRate)}/hour</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Duration:</span>
@@ -215,7 +217,7 @@ const StartSessionModal = ({ open, onOpenChange, station }: StartSessionModalPro
                 </div>
                 <div className="flex justify-between font-medium">
                   <span>Total Amount:</span>
-                  <span>${totalAmount.toFixed(2)}</span>
+                  <span>{formatCurrency(totalAmount)}</span>
                 </div>
               </div>
             </div>

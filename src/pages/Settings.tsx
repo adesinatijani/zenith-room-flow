@@ -536,6 +536,102 @@ const Settings = () => {
           </CardContent>
         </Card>
 
+        {/* Loyalty Program */}
+        <Card className="card-luxury">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-accent" />
+              Guest Loyalty Program
+            </CardTitle>
+            <CardDescription>Configure spending thresholds for loyalty tier upgrades</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="bronze-threshold">Bronze Tier (Minimum Spent)</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">{settings.currency}</span>
+                  <Input
+                    id="bronze-threshold"
+                    type="number"
+                    min="0"
+                    value={settings.loyalty_bronze_threshold || 0}
+                    onChange={(e) => updateSetting('loyalty_bronze_threshold', parseFloat(e.target.value) || 0)}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Default tier for new guests</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="silver-threshold">Silver Tier (Minimum Spent)</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">{settings.currency}</span>
+                  <Input
+                    id="silver-threshold"
+                    type="number"
+                    min="0"
+                    value={settings.loyalty_silver_threshold || 2000}
+                    onChange={(e) => updateSetting('loyalty_silver_threshold', parseFloat(e.target.value) || 0)}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Upgrade after reaching this amount</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="gold-threshold">Gold Tier (Minimum Spent)</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">{settings.currency}</span>
+                  <Input
+                    id="gold-threshold"
+                    type="number"
+                    min="0"
+                    value={settings.loyalty_gold_threshold || 5000}
+                    onChange={(e) => updateSetting('loyalty_gold_threshold', parseFloat(e.target.value) || 0)}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Premium tier for high spenders</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="platinum-threshold">Platinum Tier (Minimum Spent)</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">{settings.currency}</span>
+                  <Input
+                    id="platinum-threshold"
+                    type="number"
+                    min="0"
+                    value={settings.loyalty_platinum_threshold || 10000}
+                    onChange={(e) => updateSetting('loyalty_platinum_threshold', parseFloat(e.target.value) || 0)}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Top tier for VIP guests</p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-muted/50 rounded-lg mt-4">
+              <p className="text-sm font-medium mb-2">Current Tier Breakdown:</p>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span>🥉 Bronze:</span>
+                  <span>{settings.currency} {settings.loyalty_bronze_threshold || 0} - {settings.currency} {(settings.loyalty_silver_threshold || 2000) - 1}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>🥈 Silver:</span>
+                  <span>{settings.currency} {settings.loyalty_silver_threshold || 2000} - {settings.currency} {(settings.loyalty_gold_threshold || 5000) - 1}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>🥇 Gold:</span>
+                  <span>{settings.currency} {settings.loyalty_gold_threshold || 5000} - {settings.currency} {(settings.loyalty_platinum_threshold || 10000) - 1}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>💎 Platinum:</span>
+                  <span>{settings.currency} {settings.loyalty_platinum_threshold || 10000}+</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Security */}
         <Card className="card-luxury">
           <CardHeader>

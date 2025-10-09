@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import { Download, FileSpreadsheet, FileText, Calendar } from "lucide-react";
 import { format } from "date-fns";
 
@@ -18,6 +19,7 @@ interface ExportDataModalProps {
 
 export const ExportDataModal = ({ isOpen, onClose, entries, summary, budgets }: ExportDataModalProps) => {
   const { toast } = useToast();
+  const { formatCurrency } = useGlobalSettings();
   const [exportFormat, setExportFormat] = useState("excel");
   const [exportType, setExportType] = useState("complete");
   const [includeOptions, setIncludeOptions] = useState({
@@ -74,19 +76,19 @@ export const ExportDataModal = ({ isOpen, onClose, entries, summary, budgets }: 
     if (includeOptions.summary && summary) {
       pdfContent += "FINANCIAL SUMMARY\n";
       pdfContent += "==================\n";
-      pdfContent += `Revenue: $${summary.revenue?.toLocaleString() || '0'}\n`;
-      pdfContent += `Expenses: $${summary.expenses?.toLocaleString() || '0'}\n`;
-      pdfContent += `Net Income: $${summary.netIncome?.toLocaleString() || '0'}\n`;
-      pdfContent += `Assets: $${summary.assets?.toLocaleString() || '0'}\n`;
-      pdfContent += `Liabilities: $${summary.liabilities?.toLocaleString() || '0'}\n`;
-      pdfContent += `Equity: $${summary.equity?.toLocaleString() || '0'}\n\n`;
+      pdfContent += `Revenue: ${formatCurrency(summary.revenue || 0)}\n`;
+      pdfContent += `Expenses: ${formatCurrency(summary.expenses || 0)}\n`;
+      pdfContent += `Net Income: ${formatCurrency(summary.netIncome || 0)}\n`;
+      pdfContent += `Assets: ${formatCurrency(summary.assets || 0)}\n`;
+      pdfContent += `Liabilities: ${formatCurrency(summary.liabilities || 0)}\n`;
+      pdfContent += `Equity: ${formatCurrency(summary.equity || 0)}\n\n`;
     }
 
     if (includeOptions.entries && entries.length > 0) {
       pdfContent += "JOURNAL ENTRIES\n";
       pdfContent += "================\n";
       entries.forEach(entry => {
-        pdfContent += `${entry.entry_date} | ${entry.description} | $${entry.amount?.toLocaleString() || '0'}\n`;
+        pdfContent += `${entry.entry_date} | ${entry.description} | ${formatCurrency(entry.amount || 0)}\n`;
       });
     }
 

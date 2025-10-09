@@ -10,6 +10,7 @@ import GuestHistoryModal from "@/components/guest/GuestHistoryModal";
 import EditGuestModal from "@/components/guest/EditGuestModal";
 import { useGuestsDB } from "@/hooks/useGuestsDB";
 import { useRoomsDB } from "@/hooks/useRoomsDB";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import {
   Users, 
   Search,
@@ -29,6 +30,7 @@ const GuestManagement = () => {
   const { toast } = useToast();
   const { guests, loading, addGuest, updateGuest } = useGuestsDB();
   const { bookings } = useRoomsDB();
+  const { formatCurrency } = useGlobalSettings();
   
   const [activeTab, setActiveTab] = useState("guests");
   const [searchTerm, setSearchTerm] = useState("");
@@ -193,7 +195,7 @@ const GuestManagement = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <CreditCard className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">${guest.total_spent.toLocaleString()} spent</span>
+                          <span className="text-sm">{formatCurrency(guest.total_spent)} spent</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-muted-foreground" />
@@ -315,7 +317,7 @@ const GuestManagement = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</div>
+                <div className="text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</div>
                 <p className="text-xs text-muted-foreground">
                   From guest bookings
                 </p>
