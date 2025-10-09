@@ -32,6 +32,6 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           port: ${{ secrets.FTP_PORT }}
-          local-dir: ./dist
+          local-dir: ./dist/
           server-dir: /home/qkfjefmc/app.whihs.com.ng/
           dangerous-clean-slate: true
