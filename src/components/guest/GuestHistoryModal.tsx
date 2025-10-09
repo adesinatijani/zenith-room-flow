@@ -2,7 +2,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
+import { useRoomsDB } from "@/hooks/useRoomsDB";
+import { useGuestsDB } from "@/hooks/useGuestsDB";
 import { Calendar, Clock, CreditCard, MapPin, Star } from "lucide-react";
+import { useMemo } from "react";
 
 interface GuestHistoryModalProps {
   open: boolean;
@@ -10,61 +13,45 @@ interface GuestHistoryModalProps {
   guestName: string;
 }
 
-interface BookingRecord {
-  id: string;
-  roomNumber: string;
-  checkIn: string;
-  checkOut: string;
-  status: 'completed' | 'cancelled' | 'no-show';
-  amount: number;
-  services: string[];
-}
-
 const GuestHistoryModal = ({ open, onOpenChange, guestName }: GuestHistoryModalProps) => {
   const { formatCurrency } = useGlobalSettings();
+  const { bookings } = useRoomsDB();
+  const { guests } = useGuestsDB();
   
-  // Mock data - in real app this would come from database
-  const bookingHistory: BookingRecord[] = [
-    {
-      id: "B001",
-      roomNumber: "305",
-      checkIn: "2024-01-10",
-      checkOut: "2024-01-15",
-      status: 'completed',
-      amount: 1250,
-      services: ['Room Service', 'Spa', 'Laundry']
-    },
-    {
-      id: "B002",
-      roomNumber: "120",
-      checkIn: "2023-12-05",
-      checkOut: "2023-12-08",
-      status: 'completed',
-      amount: 890,
-      services: ['Gym', 'Restaurant']
-    },
-    {
-      id: "B003",
-      roomNumber: "201",
-      checkIn: "2023-08-15",
-      checkOut: "2023-08-20",
-      status: 'completed',
-      amount: 1750,
-      services: ['Hall Booking', 'Catering', 'Game Center']
-    }
-  ];
+  // Get guest by name
+  const guest = useMemo(() => 
+    guests.find(g => g.name === guestName), 
+    [guests, guestName]
+  );
+
+  // Get booking history for this guest from database
+  const bookingHistory = useMemo(() => 
+    bookings
+      .filter(b => b.guest_name === guestName)
+      .map(booking => ({
+        id: booking.id,
+        roomNumber: booking.room_id,
+        checkIn: booking.check_in_date,
+        checkOut: booking.check_out_date,
+        status: booking.booking_status as 'completed' | 'cancelled' | 'active',
+        amount: booking.total_amount,
+        services: [] // Can be extended when services tracking is added
+      }))
+      .sort((a, b) => new Date(b.checkIn).getTime() - new Date(a.checkIn).getTime()),
+    [bookings, guestName]
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-success text-success-foreground';
+      case 'completed': 
+      case 'active': return 'bg-success text-success-foreground';
       case 'cancelled': return 'bg-destructive text-destructive-foreground';
-      case 'no-show': return 'bg-muted text-muted-foreground';
       default: return 'bg-muted text-muted-foreground';
     }
   };
 
-  const totalSpent = bookingHistory.reduce((sum, booking) => sum + booking.amount, 0);
-  const totalBookings = bookingHistory.length;
+  const totalSpent = guest?.total_spent || 0;
+  const totalBookings = guest?.total_bookings || 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -144,16 +131,18 @@ const GuestHistoryModal = ({ open, onOpenChange, guestName }: GuestHistoryModalP
                     </div>
                   </div>
                   
-                  <div className="mt-3">
-                    <p className="text-sm text-muted-foreground mb-2">Services Used:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {booking.services.map((service, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {service}
-                        </Badge>
-                      ))}
+                   {booking.services.length > 0 && (
+                    <div className="mt-3">
+                      <p className="text-sm text-muted-foreground mb-2">Services Used:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {booking.services.map((service, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {service}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                   )}
                 </CardContent>
               </Card>
             ))}

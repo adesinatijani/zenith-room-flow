@@ -5,11 +5,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, UserPlus } from "lucide-react";
 import { format } from "date-fns";
-import { useGuests } from "@/hooks/useGuests";
+import { useGuestsDB } from "@/hooks/useGuestsDB";
 import { toast } from "sonner";
 import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
+import AddGuestModal from "@/components/guest/AddGuestModal";
 
 interface Room {
   id: string;
@@ -26,11 +27,12 @@ interface CheckInModalProps {
 }
 
 export const CheckInModal = ({ open, onOpenChange, room, onCheckInConfirm }: CheckInModalProps) => {
-  const { guests } = useGuests();
+  const { guests } = useGuestsDB();
   const { formatCurrency } = useGlobalSettings();
   const [selectedGuest, setSelectedGuest] = useState("");
   const [checkInDate, setCheckInDate] = useState<Date | undefined>(new Date());
   const [checkOutDate, setCheckOutDate] = useState<Date | undefined>(new Date(Date.now() + 86400000)); // Tomorrow
+  const [showAddGuest, setShowAddGuest] = useState(false);
 
   const handleCheckIn = () => {
     if (!room) return;
@@ -86,14 +88,26 @@ export const CheckInModal = ({ open, onOpenChange, room, onCheckInConfirm }: Che
         <div className="space-y-4">
           <div>
             <Label htmlFor="guest">Select Registered Guest *</Label>
-            <Select value={selectedGuest} onValueChange={setSelectedGuest}>
+            <Select value={selectedGuest} onValueChange={(value) => {
+              if (value === "add-new") {
+                setShowAddGuest(true);
+              } else {
+                setSelectedGuest(value);
+              }
+            }}>
               <SelectTrigger>
                 <SelectValue placeholder="Choose a registered guest" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="add-new" className="text-primary font-medium">
+                  <div className="flex items-center gap-2">
+                    <UserPlus className="h-4 w-4" />
+                    <span>Add New Guest</span>
+                  </div>
+                </SelectItem>
                 {guests.map(guest => (
                   <SelectItem key={guest.id} value={guest.id}>
-                    {guest.name} - {guest.email}
+                    {guest.name}{guest.email ? ` - ${guest.email}` : ''}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -164,6 +178,11 @@ export const CheckInModal = ({ open, onOpenChange, room, onCheckInConfirm }: Che
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <AddGuestModal
+        open={showAddGuest}
+        onOpenChange={setShowAddGuest}
+      />
     </Dialog>
   );
 };

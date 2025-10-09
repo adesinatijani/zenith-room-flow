@@ -29,7 +29,9 @@ import { useOrders, Order } from "@/hooks/useOrders";
 import { useRoomsDB } from "@/hooks/useRoomsDB";
 import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import { useMenuItemsDB } from "@/hooks/useMenuItemsDB";
+import { useGuestsDB } from "@/hooks/useGuestsDB";
 import AddTableModal from "./AddTableModal";
+import AddGuestModal from "@/components/guest/AddGuestModal";
 
 interface MenuItem {
   id: string;
@@ -53,16 +55,20 @@ const RestaurantPOS = () => {
   const { tables, loading: tablesLoading, updateTableStatus, deleteTable } = useRestaurantTables();
   const { orders, loading: ordersLoading, createOrder, addItemToOrder, updateItemQuantity, processPayment, deleteOrder } = useOrders();
   const { rooms, loading: roomsLoading } = useRoomsDB();
+  const { guests } = useGuestsDB();
   const { settings, formatCurrency } = useGlobalSettings();
   const { toast } = useToast();
   
   const [activeCategory, setActiveCategory] = useState("");
   const [showTableView, setShowTableView] = useState(false);
   const [showRoomView, setShowRoomView] = useState(false);
+  const [showGuestView, setShowGuestView] = useState(false);
   const [showGuestTypeModal, setShowGuestTypeModal] = useState(false);
   const [showAddTableModal, setShowAddTableModal] = useState(false);
+  const [showAddGuestModal, setShowAddGuestModal] = useState(false);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+  const [selectedGuest, setSelectedGuest] = useState<string | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<string>("");
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [isAddingItem, setIsAddingItem] = useState(false);

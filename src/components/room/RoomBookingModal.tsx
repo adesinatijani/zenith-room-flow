@@ -6,12 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, UserPlus } from "lucide-react";
 import { format } from "date-fns";
-import { useGuests } from "@/hooks/useGuests";
+import { useGuestsDB } from "@/hooks/useGuestsDB";
 import { toast } from "sonner";
 import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import { useRoomsDB } from "@/hooks/useRoomsDB";
+import AddGuestModal from "@/components/guest/AddGuestModal";
 
 interface Room {
   id: string;
@@ -29,7 +30,7 @@ interface RoomBookingModalProps {
 }
 
 export const RoomBookingModal = ({ open, onOpenChange, room, availableRooms, onBookingConfirm }: RoomBookingModalProps) => {
-  const { guests } = useGuests();
+  const { guests } = useGuestsDB();
   const { formatCurrency } = useGlobalSettings();
   const { rooms } = useRoomsDB();
   const [selectedRoom, setSelectedRoom] = useState("");
@@ -38,6 +39,7 @@ export const RoomBookingModal = ({ open, onOpenChange, room, availableRooms, onB
   const [nights, setNights] = useState("1");
   const [specialRequests, setSpecialRequests] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAddGuest, setShowAddGuest] = useState(false);
 
   // Get available rooms from prop or all available rooms from database
   const roomsToShow = availableRooms || rooms.filter(r => r.status === 'available').map(r => ({
@@ -163,14 +165,26 @@ export const RoomBookingModal = ({ open, onOpenChange, room, availableRooms, onB
 
           <div>
             <Label htmlFor="guest">Select Guest *</Label>
-            <Select value={selectedGuest} onValueChange={setSelectedGuest}>
+            <Select value={selectedGuest} onValueChange={(value) => {
+              if (value === "add-new") {
+                setShowAddGuest(true);
+              } else {
+                setSelectedGuest(value);
+              }
+            }}>
               <SelectTrigger>
                 <SelectValue placeholder="Choose a registered guest" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="add-new" className="text-primary font-medium">
+                  <div className="flex items-center gap-2">
+                    <UserPlus className="h-4 w-4" />
+                    <span>Add New Guest</span>
+                  </div>
+                </SelectItem>
                 {guests.map(guest => (
                   <SelectItem key={guest.id} value={guest.id}>
-                    {guest.name} - {guest.email}
+                    {guest.name}{guest.email ? ` - ${guest.email}` : ''}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -243,6 +257,11 @@ export const RoomBookingModal = ({ open, onOpenChange, room, availableRooms, onB
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <AddGuestModal
+        open={showAddGuest}
+        onOpenChange={setShowAddGuest}
+      />
     </Dialog>
   );
 };

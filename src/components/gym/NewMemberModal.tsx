@@ -8,6 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useGuestsDB } from "@/hooks/useGuestsDB";
+import { useGymDB } from "@/hooks/useGymDB";
+import AddGuestModal from "@/components/guest/AddGuestModal";
 
 interface NewMemberModalProps {
   open: boolean;
@@ -16,7 +19,11 @@ interface NewMemberModalProps {
 
 const NewMemberModal = ({ open, onOpenChange }: NewMemberModalProps) => {
   const { toast } = useToast();
+  const { guests } = useGuestsDB();
+  const { addMember } = useGymDB();
   
+  const [selectedGuestId, setSelectedGuestId] = useState<string>("");
+  const [showAddGuestModal, setShowAddGuestModal] = useState(false);
   const [memberData, setMemberData] = useState({
     firstName: "",
     lastName: "",
@@ -60,8 +67,27 @@ const NewMemberModal = ({ open, onOpenChange }: NewMemberModalProps) => {
     setMemberData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {
-    if (!memberData.firstName || !memberData.lastName || !memberData.email || !memberData.phone || !memberData.membershipType) {
+  const handleGuestSelect = (guestId: string) => {
+    if (guestId === "add_new") {
+      setShowAddGuestModal(true);
+      return;
+    }
+    
+    setSelectedGuestId(guestId);
+    const guest = guests.find(g => g.id === guestId);
+    if (guest) {
+      setMemberData(prev => ({
+        ...prev,
+        firstName: guest.name.split(' ')[0] || "",
+        lastName: guest.name.split(' ').slice(1).join(' ') || "",
+        email: guest.email || "",
+        phone: guest.phone || ""
+      }));
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!memberData.firstName || !memberData.lastName || !memberData.email || !memberData.phone || !memberData.membershipType || !selectedPlan) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields",
@@ -70,26 +96,56 @@ const NewMemberModal = ({ open, onOpenChange }: NewMemberModalProps) => {
       return;
     }
 
-    // Mock member creation
-    toast({
-      title: "Member Added Successfully",
-      description: `${memberData.firstName} ${memberData.lastName} has been registered as a new member`,
-    });
+    try {
+      const startDate = new Date();
+      const endDate = new Date(startDate);
+      
+      // Calculate end date based on membership type
+      if (memberData.membershipType === "day-pass") {
+        endDate.setDate(endDate.getDate() + 1);
+      } else if (memberData.membershipType === "monthly") {
+        endDate.setMonth(endDate.getMonth() + 1);
+      } else if (memberData.membershipType === "yearly") {
+        endDate.setFullYear(endDate.getFullYear() + 1);
+      }
 
-    // Reset form
-    setMemberData({
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      membershipType: "",
-      emergencyContact: "",
-      emergencyPhone: "",
-      medicalConditions: "",
-      paymentMethod: ""
-    });
+      await addMember({
+        name: `${memberData.firstName} ${memberData.lastName}`,
+        email: memberData.email,
+        phone: memberData.phone,
+        membership_type: memberData.membershipType as "day-pass" | "monthly" | "yearly",
+        start_date: startDate.toISOString().split('T')[0],
+        end_date: endDate.toISOString().split('T')[0],
+        status: "active"
+      });
 
-    onOpenChange(false);
+      toast({
+        title: "Member Added Successfully",
+        description: `${memberData.firstName} ${memberData.lastName} has been registered as a new member`,
+      });
+
+      // Reset form
+      setSelectedGuestId("");
+      setMemberData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        membershipType: "",
+        emergencyContact: "",
+        emergencyPhone: "",
+        medicalConditions: "",
+        paymentMethod: ""
+      });
+
+      onOpenChange(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add member",
+        variant: "destructive",
+      });
+    }
   };
 
   const selectedPlan = membershipPlans.find(plan => plan.id === memberData.membershipType);
@@ -109,6 +165,23 @@ const NewMemberModal = ({ open, onOpenChange }: NewMemberModalProps) => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Personal Information</h3>
             
+            <div>
+              <Label htmlFor="guest">Select Existing Guest (Optional)</Label>
+              <Select value={selectedGuestId} onValueChange={handleGuestSelect}>
+                <SelectTrigger id="guest">
+                  <SelectValue placeholder="Select a guest or add new" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="add_new">+ Add New Guest</SelectItem>
+                  {guests.map((guest) => (
+                    <SelectItem key={guest.id} value={guest.id}>
+                      {guest.name} - {guest.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="firstName">First Name *</Label>
@@ -277,6 +350,11 @@ const NewMemberModal = ({ open, onOpenChange }: NewMemberModalProps) => {
           </Button>
         </DialogFooter>
       </DialogContent>
+      
+      <AddGuestModal
+        open={showAddGuestModal}
+        onOpenChange={setShowAddGuestModal}
+      />
     </Dialog>
   );
 };

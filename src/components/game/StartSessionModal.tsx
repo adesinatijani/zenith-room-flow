@@ -21,28 +21,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { GameStation, useGameCenterDB } from "@/hooks/useGameCenterDB";
 
 interface StartSessionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  station?: {
-    id: string;
-    name: string;
-    hourlyRate: number;
-    games: string[];
-  };
+  station?: GameStation | null;
 }
 
 interface SessionFormData {
   playerName: string;
   playerPhone: string;
   duration: number;
-  selectedGame: string;
   paymentMethod: string;
 }
 
 const StartSessionModal = ({ open, onOpenChange, station }: StartSessionModalProps) => {
   const { formatCurrency } = useGlobalSettings();
+  const { startSession } = useGameCenterDB();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<SessionFormData>({
@@ -50,26 +46,38 @@ const StartSessionModal = ({ open, onOpenChange, station }: StartSessionModalPro
       playerName: "",
       playerPhone: "",
       duration: 60,
-      selectedGame: "",
       paymentMethod: "cash",
     },
   });
 
   const duration = form.watch("duration");
-  const totalAmount = station ? (station.hourlyRate * (duration / 60)) : 0;
+  const totalAmount = station ? (station.hourly_rate * (duration / 60)) : 0;
 
   const onSubmit = async (data: SessionFormData) => {
+    if (!station) return;
+    
     setIsSubmitting(true);
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const now = new Date();
+      await startSession({
+        station_id: station.id,
+        player_name: data.playerName,
+        player_phone: data.playerPhone,
+        start_time: now.toISOString(),
+        hourly_rate: station.hourly_rate,
+        total_amount: totalAmount,
+        payment_status: data.paymentMethod === "room_charge" ? "pending" : "paid",
+        payment_method: data.paymentMethod,
+        status: "active",
+      });
       
-      console.log("Starting session:", { ...data, stationId: station?.id, totalAmount });
       toast.success("Gaming session started successfully!");
       form.reset();
       onOpenChange(false);
     } catch (error) {
       toast.error("Failed to start session");
+      console.error("Error starting session:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -83,7 +91,7 @@ const StartSessionModal = ({ open, onOpenChange, station }: StartSessionModalPro
         <DialogHeader>
           <DialogTitle>Start Gaming Session</DialogTitle>
           <DialogDescription>
-            Start a new session on {station.name}
+            Start a new session on {station.station_name}
           </DialogDescription>
         </DialogHeader>
         
@@ -108,11 +116,12 @@ const StartSessionModal = ({ open, onOpenChange, station }: StartSessionModalPro
               <FormField
                 control={form.control}
                 name="playerPhone"
+                rules={{ required: "Phone number is required" }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number (Optional)</FormLabel>
+                    <FormLabel>Phone Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="+1234567890" {...field} />
+                      <Input type="tel" placeholder="Enter phone" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -123,51 +132,26 @@ const StartSessionModal = ({ open, onOpenChange, station }: StartSessionModalPro
             <FormField
               control={form.control}
               name="duration"
-              rules={{ 
-                required: "Duration is required",
-                min: { value: 15, message: "Minimum 15 minutes" }
-              }}
+              rules={{ required: "Duration is required", min: { value: 30, message: "Minimum 30 minutes" } }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Session Duration</FormLabel>
-                  <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
+                  <FormLabel>Duration (minutes)</FormLabel>
+                  <Select 
+                    onValueChange={(value) => field.onChange(parseInt(value))} 
+                    value={field.value.toString()}
+                  >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Select duration" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="15">15 minutes</SelectItem>
                       <SelectItem value="30">30 minutes</SelectItem>
                       <SelectItem value="60">1 hour</SelectItem>
                       <SelectItem value="90">1.5 hours</SelectItem>
                       <SelectItem value="120">2 hours</SelectItem>
                       <SelectItem value="180">3 hours</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="selectedGame"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Select Game (Optional)</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose a game" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {station.games.map((game) => (
-                        <SelectItem key={game} value={game}>
-                          {game}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="240">4 hours</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -178,21 +162,20 @@ const StartSessionModal = ({ open, onOpenChange, station }: StartSessionModalPro
             <FormField
               control={form.control}
               name="paymentMethod"
-              rules={{ required: "Payment method is required" }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Payment Method</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Select payment method" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="card">Credit/Debit Card</SelectItem>
-                      <SelectItem value="digital">Digital Wallet</SelectItem>
-                      <SelectItem value="account">Hotel Account</SelectItem>
+                      <SelectItem value="card">Card</SelectItem>
+                      <SelectItem value="mobile_money">Mobile Money</SelectItem>
+                      <SelectItem value="room_charge">Room Charge</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -200,30 +183,32 @@ const StartSessionModal = ({ open, onOpenChange, station }: StartSessionModalPro
               )}
             />
 
-            <div className="p-4 bg-muted rounded-lg">
-              <div className="text-sm font-medium mb-2">Session Summary</div>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span>Station:</span>
-                  <span>{station.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Rate:</span>
-                  <span>{formatCurrency(station.hourlyRate)}/hour</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Duration:</span>
-                  <span>{duration} minutes</span>
-                </div>
-                <div className="flex justify-between font-medium">
-                  <span>Total Amount:</span>
-                  <span>{formatCurrency(totalAmount)}</span>
-                </div>
+            <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Station:</span>
+                <span className="font-medium">{station.station_name}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Hourly Rate:</span>
+                <span className="font-medium">{formatCurrency(station.hourly_rate)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Duration:</span>
+                <span className="font-medium">{duration} minutes</span>
+              </div>
+              <div className="flex justify-between text-lg font-bold border-t pt-2">
+                <span>Total Amount:</span>
+                <span>{formatCurrency(totalAmount)}</span>
               </div>
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>

@@ -54,8 +54,8 @@ const GuestManagement = () => {
 
   const filteredGuests = guests.filter(guest =>
     guest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    guest.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    guest.phone.includes(searchTerm)
+    guest.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    guest.phone?.includes(searchTerm)
   );
 
   const getTierColor = (tier: string) => {

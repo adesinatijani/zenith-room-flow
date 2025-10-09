@@ -5,176 +5,38 @@ import {
   Clock,
   Trophy,
   Play,
-  Pause,
   Square,
-  Timer,
   DollarSign,
   Plus,
   Settings,
   Monitor,
   Joystick,
-  Crown,
-  Target,
-  Zap
+  Edit
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import CreateTournamentModal from "@/components/game/CreateTournamentModal";
 import NewBookingModal from "@/components/game/NewBookingModal";
 import StartSessionModal from "@/components/game/StartSessionModal";
+import EditStationModal from "@/components/game/EditStationModal";
+import AddStationModal from "@/components/game/AddStationModal";
 import LeaderboardModal from "@/components/game/LeaderboardModal";
-
-interface GameStation {
-  id: string;
-  name: string;
-  type: "console" | "pc" | "vr" | "arcade";
-  status: "available" | "occupied" | "maintenance" | "reserved";
-  currentPlayer?: string;
-  timeRemaining?: number;
-  hourlyRate: number;
-  games: string[];
-}
-
-interface Tournament {
-  id: string;
-  name: string;
-  game: string;
-  date: string;
-  time: string;
-  participants: number;
-  maxParticipants: number;
-  prizePool: number;
-  status: "upcoming" | "active" | "completed";
-}
-
-interface Booking {
-  id: string;
-  stationId: string;
-  stationName: string;
-  playerName: string;
-  startTime: string;
-  duration: number;
-  totalAmount: number;
-  status: "active" | "completed" | "cancelled";
-}
+import { useGameCenterDB, GameStation } from "@/hooks/useGameCenterDB";
 
 const GameCenter = () => {
-  const [stations] = useState<GameStation[]>([
-    {
-      id: "1",
-      name: "PlayStation 5 #1",
-      type: "console",
-      status: "occupied",
-      currentPlayer: "Alex Johnson",
-      timeRemaining: 45,
-      hourlyRate: 25,
-      games: ["FIFA 24", "Call of Duty", "Spider-Man", "Gran Turismo"]
-    },
-    {
-      id: "2", 
-      name: "Gaming PC #1",
-      type: "pc",
-      status: "available",
-      hourlyRate: 30,
-      games: ["Valorant", "League of Legends", "Counter-Strike", "Fortnite"]
-    },
-    {
-      id: "3",
-      name: "VR Station #1", 
-      type: "vr",
-      status: "occupied",
-      currentPlayer: "Sarah Chen",
-      timeRemaining: 25,
-      hourlyRate: 40,
-      games: ["Beat Saber", "Half-Life Alyx", "Job Simulator"]
-    },
-    {
-      id: "4",
-      name: "Arcade Fighter #1",
-      type: "arcade", 
-      status: "maintenance",
-      hourlyRate: 15,
-      games: ["Street Fighter 6", "Tekken 8", "Mortal Kombat"]
-    },
-    {
-      id: "5",
-      name: "Xbox Series X #1",
-      type: "console",
-      status: "reserved", 
-      hourlyRate: 25,
-      games: ["Halo Infinite", "Forza Horizon", "Gears of War"]
-    },
-    {
-      id: "6",
-      name: "Gaming PC #2",
-      type: "pc",
-      status: "available",
-      hourlyRate: 30, 
-      games: ["World of Warcraft", "Cyberpunk 2077", "The Witcher 3"]
-    }
-  ]);
-
-  const [tournaments] = useState<Tournament[]>([
-    {
-      id: "1",
-      name: "FIFA 24 Championship", 
-      game: "FIFA 24",
-      date: "2024-01-25",
-      time: "19:00",
-      participants: 12,
-      maxParticipants: 16,
-      prizePool: 500,
-      status: "upcoming"
-    },
-    {
-      id: "2",
-      name: "Valorant Tournament",
-      game: "Valorant",
-      date: "2024-01-22", 
-      time: "18:00",
-      participants: 8,
-      maxParticipants: 10,
-      prizePool: 750,
-      status: "active"
-    },
-    {
-      id: "3", 
-      name: "Street Fighter Battle",
-      game: "Street Fighter 6",
-      date: "2024-01-20",
-      time: "20:00", 
-      participants: 16,
-      maxParticipants: 16,
-      prizePool: 300,
-      status: "completed"
-    }
-  ]);
-
-  const [bookings] = useState<Booking[]>([
-    {
-      id: "1",
-      stationId: "1",
-      stationName: "PlayStation 5 #1",
-      playerName: "Alex Johnson",
-      startTime: "14:30",
-      duration: 120,
-      totalAmount: 50,
-      status: "active"
-    },
-    {
-      id: "2", 
-      stationId: "3",
-      stationName: "VR Station #1", 
-      playerName: "Sarah Chen",
-      startTime: "15:00",
-      duration: 60,
-      totalAmount: 40,
-      status: "active"
-    }
-  ]);
+  const {
+    stations,
+    sessions,
+    tournaments,
+    bookings,
+    loading,
+    updateStation,
+    startSession,
+    endSession,
+    updateStationStatus,
+  } = useGameCenterDB();
 
   const [activeTab, setActiveTab] = useState("stations");
 
@@ -182,25 +44,32 @@ const GameCenter = () => {
   const [createTournamentOpen, setCreateTournamentOpen] = useState(false);
   const [newBookingOpen, setNewBookingOpen] = useState(false);
   const [startSessionOpen, setStartSessionOpen] = useState(false);
+  const [editStationOpen, setEditStationOpen] = useState(false);
+  const [addStationOpen, setAddStationOpen] = useState(false);
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const [selectedStation, setSelectedStation] = useState<GameStation | null>(null);
 
-  const stationTypeColors = {
+  const stationTypeColors: Record<string, string> = {
     console: "bg-blue-500",
     pc: "bg-green-500", 
     vr: "bg-purple-500",
-    arcade: "bg-orange-500"
+    arcade: "bg-orange-500",
+    playstation: "bg-blue-500",
+    xbox: "bg-green-500"
   };
 
-  const statusColors = {
+  const statusColors: Record<string, string> = {
     available: "bg-green-500",
     occupied: "bg-red-500",
     maintenance: "bg-yellow-500",
     reserved: "bg-blue-500",
     upcoming: "bg-blue-500",
-    active: "bg-green-500", 
+    registration_open: "bg-green-500",
+    in_progress: "bg-green-500", 
     completed: "bg-gray-500",
-    cancelled: "bg-red-500"
+    cancelled: "bg-red-500",
+    confirmed: "bg-blue-500",
+    no_show: "bg-gray-500"
   };
 
   const getStationStats = () => {
@@ -215,14 +84,22 @@ const GameCenter = () => {
   const getTournamentStats = () => {
     return {
       total: tournaments.length,
-      upcoming: tournaments.filter(t => t.status === "upcoming").length,
-      active: tournaments.filter(t => t.status === "active").length,
+      upcoming: tournaments.filter(t => t.status === "upcoming" || t.status === "registration_open").length,
+      active: tournaments.filter(t => t.status === "in_progress").length,
       completed: tournaments.filter(t => t.status === "completed").length,
     };
   };
 
   const stationStats = getStationStats();
   const tournamentStats = getTournamentStats();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -232,6 +109,10 @@ const GameCenter = () => {
           <p className="text-muted-foreground">Manage gaming stations, tournaments, and bookings</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setAddStationOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Station
+          </Button>
           <Button variant="outline" onClick={() => setCreateTournamentOpen(true)}>
             <Trophy className="h-4 w-4 mr-2" />
             Create Tournament
@@ -287,69 +168,68 @@ const GameCenter = () => {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
-                      {station.type === "console" && <Gamepad2 className="h-5 w-5" />}
-                      {station.type === "pc" && <Monitor className="h-5 w-5" />}
-                      {station.type === "vr" && <Joystick className="h-5 w-5" />}
-                      {station.type === "arcade" && <Gamepad2 className="h-5 w-5" />}
-                      {station.name}
+                      {station.game_type?.toLowerCase().includes("console") && <Gamepad2 className="h-5 w-5" />}
+                      {station.game_type?.toLowerCase().includes("pc") && <Monitor className="h-5 w-5" />}
+                      {station.game_type?.toLowerCase().includes("vr") && <Joystick className="h-5 w-5" />}
+                      {!station.game_type?.toLowerCase().includes("console") && 
+                       !station.game_type?.toLowerCase().includes("pc") && 
+                       !station.game_type?.toLowerCase().includes("vr") && <Gamepad2 className="h-5 w-5" />}
+                      {station.station_name}
                     </CardTitle>
                     <Badge className={`${statusColors[station.status]} text-white`}>
                       {station.status}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className={`${stationTypeColors[station.type]} text-white`}>
-                      {station.type}
+                    <Badge className={`${stationTypeColors[station.game_type?.toLowerCase()] || 'bg-blue-500'} text-white`}>
+                      {station.game_type}
                     </Badge>
                     <span className="text-sm text-muted-foreground">
-                      ${station.hourlyRate}/hour
+                      ${station.hourly_rate}/hour
                     </span>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {station.currentPlayer && (
+                    {station.status === "occupied" && (
                       <div>
-                        <div className="text-sm text-muted-foreground">Current Player:</div>
-                        <div className="font-medium">{station.currentPlayer}</div>
-                        {station.timeRemaining && (
-                          <div className="mt-2">
-                            <div className="flex justify-between text-sm mb-1">
-                              <span>Time Remaining</span>
-                              <span>{station.timeRemaining} min</span>
-                            </div>
-                            <Progress value={(station.timeRemaining / 120) * 100} className="h-2" />
-                          </div>
-                        )}
+                        <div className="text-sm text-muted-foreground">Current Session:</div>
+                        <div className="font-medium">Active</div>
                       </div>
                     )}
 
-                    <div>
-                      <div className="text-sm text-muted-foreground mb-2">Available Games:</div>
-                      <div className="flex flex-wrap gap-1">
-                        {station.games.slice(0, 3).map((game) => (
-                          <Badge key={game} variant="secondary" className="text-xs">
-                            {game}
-                          </Badge>
-                        ))}
-                        {station.games.length > 3 && (
-                          <Badge variant="secondary" className="text-xs">
-                            +{station.games.length - 3} more
-                          </Badge>
-                        )}
+                    {station.location && (
+                      <div>
+                        <div className="text-sm text-muted-foreground">Location:</div>
+                        <div className="text-sm">{station.location}</div>
                       </div>
-                    </div>
+                    )}
+
+                    {station.equipment_specs && (
+                      <div>
+                        <div className="text-sm text-muted-foreground">Specs:</div>
+                        <div className="text-sm">{station.equipment_specs}</div>
+                      </div>
+                    )}
 
                     <div className="flex gap-2">
                       {station.status === "occupied" ? (
-                        <>
-                          <Button size="sm" variant="outline" className="flex-1">
-                            <Pause className="h-4 w-4" />
-                          </Button>
-                          <Button size="sm" variant="destructive" className="flex-1">
-                            <Square className="h-4 w-4" />
-                          </Button>
-                        </>
+                        <Button 
+                          size="sm" 
+                          variant="destructive" 
+                          className="w-full"
+                          onClick={async () => {
+                            const activeSession = sessions.find(
+                              s => s.station_id === station.id && s.status === "active"
+                            );
+                            if (activeSession) {
+                              await endSession(activeSession.id, "cash");
+                            }
+                          }}
+                        >
+                          <Square className="h-4 w-4 mr-2" />
+                          End Session
+                        </Button>
                       ) : station.status === "available" ? (
                         <Button 
                           size="sm" 
@@ -363,9 +243,16 @@ const GameCenter = () => {
                           Start Session
                         </Button>
                       ) : (
-                        <Button size="sm" variant="outline" className="w-full">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={async () => {
+                            await updateStationStatus(station.id, "available");
+                          }}
+                        >
                           <Settings className="h-4 w-4 mr-2" />
-                          Manage
+                          Set Available
                         </Button>
                       )}
                     </div>
@@ -413,39 +300,39 @@ const GameCenter = () => {
                   <div className="flex items-center justify-between">
                     <div className="space-y-2">
                       <div className="flex items-center gap-4">
-                        <h3 className="text-lg font-semibold">{tournament.name}</h3>
+                        <h3 className="text-lg font-semibold">{tournament.tournament_name}</h3>
                         <Badge className={`${statusColors[tournament.status]} text-white`}>
-                          {tournament.status}
+                          {tournament.status.replace('_', ' ')}
                         </Badge>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
                           <span className="text-muted-foreground">Game: </span>
-                          <span className="font-medium">{tournament.game}</span>
+                          <span className="font-medium">{tournament.game_type}</span>
                         </div>
                         <div>
                           <span className="text-muted-foreground">Date & Time: </span>
-                          <span className="font-medium">{tournament.date} {tournament.time}</span>
+                          <span className="font-medium">{tournament.tournament_date} {tournament.start_time}</span>
                         </div>
                         <div>
                           <span className="text-muted-foreground">Participants: </span>
                           <span className="font-medium">
-                            {tournament.participants}/{tournament.maxParticipants}
+                            {tournament.current_participants}/{tournament.max_participants}
                           </span>
                         </div>
                         <div>
                           <span className="text-muted-foreground">Prize Pool: </span>
-                          <span className="font-medium">${tournament.prizePool}</span>
+                          <span className="font-medium">${tournament.prize_pool}</span>
                         </div>
                       </div>
                     </div>
                     <div className="text-right space-y-2">
-                      <div className="text-2xl font-bold">${tournament.prizePool}</div>
+                      <div className="text-2xl font-bold">${tournament.prize_pool}</div>
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline">
                           View Details
                         </Button>
-                        {tournament.status === "upcoming" && (
+                        {(tournament.status === "upcoming" || tournament.status === "registration_open") && (
                           <Button size="sm">
                             Join Tournament
                           </Button>
@@ -463,13 +350,15 @@ const GameCenter = () => {
           {/* Active Bookings */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Active Bookings</h3>
-            {bookings.filter(b => b.status === "active").map((booking) => (
+            {bookings.filter(b => b.status === "confirmed").map((booking) => (
               <Card key={booking.id}>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="space-y-2">
                       <div className="flex items-center gap-4">
-                        <h4 className="font-semibold">{booking.stationName}</h4>
+                        <h4 className="font-semibold">
+                          {stations.find(s => s.id === booking.station_id)?.station_name || 'Station'}
+                        </h4>
                         <Badge className={`${statusColors[booking.status]} text-white`}>
                           {booking.status}
                         </Badge>
@@ -477,26 +366,27 @@ const GameCenter = () => {
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                         <div>
                           <span className="text-muted-foreground">Player: </span>
-                          <span className="font-medium">{booking.playerName}</span>
+                          <span className="font-medium">{booking.player_name}</span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Start Time: </span>
-                          <span className="font-medium">{booking.startTime}</span>
+                          <span className="text-muted-foreground">Date: </span>
+                          <span className="font-medium">{booking.booking_date}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Time: </span>
+                          <span className="font-medium">{booking.start_time}</span>
                         </div>
                         <div>
                           <span className="text-muted-foreground">Duration: </span>
-                          <span className="font-medium">{booking.duration} min</span>
+                          <span className="font-medium">{booking.duration_hours} hours</span>
                         </div>
                       </div>
                     </div>
                     <div className="text-right space-y-2">
-                      <div className="text-xl font-bold">${booking.totalAmount}</div>
+                      <div className="text-2xl font-bold">${booking.total_amount}</div>
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline">
-                          Extend Time
-                        </Button>
-                        <Button size="sm" variant="destructive">
-                          End Session
+                          View Details
                         </Button>
                       </div>
                     </div>
@@ -504,109 +394,60 @@ const GameCenter = () => {
                 </CardContent>
               </Card>
             ))}
+            {bookings.filter(b => b.status === "confirmed").length === 0 && (
+              <Card>
+                <CardContent className="p-6 text-center text-muted-foreground">
+                  No active bookings
+                </CardContent>
+              </Card>
+            )}
           </div>
         </TabsContent>
 
-        <TabsContent value="leaderboard">
+        <TabsContent value="leaderboard" className="space-y-6">
+          {/* Leaderboard Preview */}
           <Card>
-            <CardContent className="p-6">
-              <div className="text-center py-12">
-                <Trophy className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">Leaderboard</h3>
-                <p className="text-muted-foreground">Player rankings and statistics would be displayed here</p>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="h-5 w-5" />
+                Top Players
+              </CardTitle>
+              <CardDescription>Players with the most game time this month</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="text-center text-muted-foreground py-8">
+                  Click "View Full Leaderboard" to see rankings
+                </div>
+                <Button className="w-full" onClick={() => setLeaderboardOpen(true)}>
+                  View Full Leaderboard
+                </Button>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-        <TabsContent value="leaderboard" className="space-y-6">
-          {/* Leaderboard Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold">Gaming Leaderboard</h2>
-              <p className="text-muted-foreground">Top players and gaming statistics</p>
-            </div>
-            <Button onClick={() => setLeaderboardOpen(true)}>
-              <Crown className="h-4 w-4 mr-2" />
-              Full Leaderboard
-            </Button>
-          </div>
 
-          {/* Top Players Preview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="text-center border-yellow-500 bg-yellow-50">
-              <CardHeader>
-                <div className="flex justify-center mb-2">
-                  <Trophy className="h-8 w-8 text-yellow-500" />
+          {/* Gaming Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-2xl font-bold">{sessions.length}</div>
+                <div className="text-sm text-muted-foreground">Total Sessions</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-2xl font-bold">
+                  {sessions.filter(s => s.status === "active").length}
                 </div>
-                <CardTitle>Alex Rodriguez</CardTitle>
-                <CardDescription>#1 Champion</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-primary mb-2">24</div>
-                <div className="text-sm text-muted-foreground">Tournament Wins</div>
-                <Badge className="mt-2 bg-yellow-500 text-white">85% Win Rate</Badge>
+                <div className="text-sm text-muted-foreground">Active Sessions</div>
               </CardContent>
             </Card>
-
-            <Card className="text-center border-gray-400 bg-gray-50">
-              <CardHeader>
-                <div className="flex justify-center mb-2">
-                  <Crown className="h-8 w-8 text-gray-400" />
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-2xl font-bold">
+                  ${sessions.reduce((sum, s) => sum + (s.total_amount || 0), 0).toFixed(2)}
                 </div>
-                <CardTitle>Sarah Chen</CardTitle>
-                <CardDescription>#2 Runner-up</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-primary mb-2">22</div>
-                <div className="text-sm text-muted-foreground">Tournament Wins</div>
-                <Badge className="mt-2 bg-gray-400 text-white">78% Win Rate</Badge>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center border-amber-600 bg-amber-50">
-              <CardHeader>
-                <div className="flex justify-center mb-2">
-                  <Target className="h-8 w-8 text-amber-600" />
-                </div>
-                <CardTitle>Mike Johnson</CardTitle>
-                <CardDescription>#3 Third Place</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-primary mb-2">19</div>
-                <div className="text-sm text-muted-foreground">Tournament Wins</div>
-                <Badge className="mt-2 bg-amber-600 text-white">82% Win Rate</Badge>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Gaming Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4 text-center">
-                <Users className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <div className="text-2xl font-bold">127</div>
-                <div className="text-sm text-muted-foreground">Active Players</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <Trophy className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <div className="text-2xl font-bold">48</div>
-                <div className="text-sm text-muted-foreground">Tournaments</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <Clock className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <div className="text-2xl font-bold">1,456</div>
-                <div className="text-sm text-muted-foreground">Hours Played</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <Zap className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <div className="text-2xl font-bold">89%</div>
-                <div className="text-sm text-muted-foreground">Satisfaction Rate</div>
+                <div className="text-sm text-muted-foreground">Total Revenue</div>
               </CardContent>
             </Card>
           </div>
@@ -616,23 +457,35 @@ const GameCenter = () => {
       {/* Modals */}
       <CreateTournamentModal 
         open={createTournamentOpen} 
-        onOpenChange={setCreateTournamentOpen}
+        onOpenChange={setCreateTournamentOpen} 
       />
       
       <NewBookingModal 
         open={newBookingOpen} 
-        onOpenChange={setNewBookingOpen}
+        onOpenChange={setNewBookingOpen} 
       />
       
       <StartSessionModal 
         open={startSessionOpen} 
         onOpenChange={setStartSessionOpen}
-        station={selectedStation || undefined}
+        station={selectedStation}
       />
       
       <LeaderboardModal 
         open={leaderboardOpen} 
-        onOpenChange={setLeaderboardOpen}
+        onOpenChange={setLeaderboardOpen} 
+      />
+      
+      <EditStationModal 
+        open={editStationOpen} 
+        onOpenChange={setEditStationOpen}
+        station={selectedStation || undefined}
+        onUpdate={updateStation}
+      />
+
+      <AddStationModal 
+        open={addStationOpen} 
+        onOpenChange={setAddStationOpen}
       />
     </div>
   );

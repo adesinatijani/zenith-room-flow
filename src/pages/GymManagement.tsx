@@ -12,10 +12,12 @@ import {
   CreditCard,
   CheckCircle,
   XCircle,
-  Activity
+  Activity,
+  Edit
 } from "lucide-react";
 import LiveDashboardModal from "@/components/gym/LiveDashboardModal";
 import NewMemberModal from "@/components/gym/NewMemberModal";
+import EditMemberModal from "@/components/gym/EditMemberModal";
 import MemberCheckInModal from "@/components/gym/MemberCheckInModal";
 import BookTrainerModal from "@/components/gym/BookTrainerModal";
 import EquipmentStatusModal from "@/components/gym/EquipmentStatusModal";
@@ -28,7 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useGymDB } from "@/hooks/useGymDB";
+import { useGymDB, GymMember } from "@/hooks/useGymDB";
 
 const GymManagement = () => {
   const { 
@@ -37,6 +39,7 @@ const GymManagement = () => {
     trainers, 
     loading,
     addMember,
+    updateMember,
     checkInMember,
     addEquipment,
     updateEquipmentStatus,
@@ -50,11 +53,13 @@ const GymManagement = () => {
   // Modal states
   const [liveDashboardOpen, setLiveDashboardOpen] = useState(false);
   const [newMemberOpen, setNewMemberOpen] = useState(false);
+  const [editMemberOpen, setEditMemberOpen] = useState(false);
   const [memberCheckInOpen, setMemberCheckInOpen] = useState(false);
   const [bookTrainerOpen, setBookTrainerOpen] = useState(false);
   const [equipmentStatusOpen, setEquipmentStatusOpen] = useState(false);
   const [trainerScheduleOpen, setTrainerScheduleOpen] = useState(false);
   const [addEquipmentOpen, setAddEquipmentOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<GymMember | null>(null);
   const [selectedEquipment, setSelectedEquipment] = useState<any | null>(null);
   const [selectedTrainer, setSelectedTrainer] = useState<any | null>(null);
 
@@ -234,6 +239,12 @@ const GymManagement = () => {
                       <Badge className={`${statusColors[member.status]} text-white`}>
                         {member.status}
                       </Badge>
+                      <Button size="sm" variant="outline" onClick={() => {
+                        setSelectedMember(member);
+                        setEditMemberOpen(true);
+                      }}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
                       <Button size="sm" variant="outline" onClick={() => setMemberCheckInOpen(true)}>
                         <CheckCircle className="h-4 w-4" />
                       </Button>
@@ -423,8 +434,15 @@ const GymManagement = () => {
         open={newMemberOpen} 
         onOpenChange={setNewMemberOpen} 
       />
+
+      <EditMemberModal
+        open={editMemberOpen}
+        onOpenChange={setEditMemberOpen}
+        member={selectedMember}
+        onUpdate={updateMember}
+      />
       
-      <MemberCheckInModal 
+      <MemberCheckInModal
         open={memberCheckInOpen} 
         onOpenChange={setMemberCheckInOpen} 
       />

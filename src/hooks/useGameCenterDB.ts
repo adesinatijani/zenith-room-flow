@@ -290,7 +290,7 @@ export const useGameCenterDB = () => {
       await createAccountingEntryForPayment({
         amount: totalAmount,
         description: `Gaming session - Station ${session.station_id}`,
-        source_type: 'pos_order', // Using POS as closest match
+        source_type: 'game_session',
         source_id: sessionId,
         reference_number: `GAME-${sessionId.slice(0, 8)}`,
         payment_method: paymentMethod,
@@ -408,6 +408,31 @@ export const useGameCenterDB = () => {
     }
   };
 
+  // Update station (add before return)
+  const updateStation = async (id: string, stationData: Partial<GameStation>) => {
+    try {
+      const { error } = await supabase
+        .from('game_stations')
+        .update(stationData)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Game station updated successfully"
+      });
+    } catch (error) {
+      console.error('Error updating station:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update game station",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
   return {
     stations,
     sessions,
@@ -415,6 +440,7 @@ export const useGameCenterDB = () => {
     bookings,
     loading,
     addStation,
+    updateStation,
     startSession,
     endSession,
     createTournament,

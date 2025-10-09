@@ -21,6 +21,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useGuestsDB } from "@/hooks/useGuestsDB";
+import { useGameCenterDB } from "@/hooks/useGameCenterDB";
+import AddGuestModal from "@/components/guest/AddGuestModal";
 
 interface NewBookingModalProps {
   open: boolean;
@@ -28,6 +31,7 @@ interface NewBookingModalProps {
 }
 
 interface BookingFormData {
+  guestId: string;
   playerName: string;
   playerPhone: string;
   stationId: string;
@@ -38,10 +42,14 @@ interface BookingFormData {
 
 const NewBookingModal = ({ open, onOpenChange }: NewBookingModalProps) => {
   const { formatCurrency } = useGlobalSettings();
+  const { guests } = useGuestsDB();
+  const { stations, createBooking } = useGameCenterDB();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAddGuestModal, setShowAddGuestModal] = useState(false);
 
   const form = useForm<BookingFormData>({
     defaultValues: {
+      guestId: "",
       playerName: "",
       playerPhone: "",
       stationId: "",
@@ -51,23 +59,44 @@ const NewBookingModal = ({ open, onOpenChange }: NewBookingModalProps) => {
     },
   });
 
-  const availableStations = [
-    { id: "2", name: "Gaming PC #1", rate: 30, status: "available" },
-    { id: "6", name: "Gaming PC #2", rate: 30, status: "available" },
-    { id: "5", name: "Xbox Series X #1", rate: 25, status: "reserved" },
-  ];
-
+  const availableStations = stations.filter(s => s.status === "available");
   const selectedStation = availableStations.find(s => s.id === form.watch("stationId"));
   const duration = form.watch("duration");
-  const totalAmount = selectedStation ? (selectedStation.rate * (duration / 60)) : 0;
+  const totalAmount = selectedStation ? (selectedStation.hourly_rate * (duration / 60)) : 0;
+
+  const handleGuestSelect = (guestId: string) => {
+    if (guestId === "add_new") {
+      setShowAddGuestModal(true);
+      return;
+    }
+    
+    form.setValue("guestId", guestId);
+    const guest = guests.find(g => g.id === guestId);
+    if (guest) {
+      form.setValue("playerName", guest.name);
+      form.setValue("playerPhone", guest.phone || "");
+    }
+  };
 
   const onSubmit = async (data: BookingFormData) => {
     setIsSubmitting(true);
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const bookingDate = new Date(data.startTime);
+      const bookingTime = bookingDate.toTimeString().split(' ')[0]; // HH:MM:SS
+
+      await createBooking({
+        station_id: data.stationId,
+        player_name: data.playerName,
+        player_phone: data.playerPhone,
+        booking_date: bookingDate.toISOString().split('T')[0],
+        start_time: bookingTime,
+        duration_hours: data.duration / 60,
+        total_amount: totalAmount,
+        payment_status: "pending",
+        status: "confirmed"
+      });
       
-      console.log("Creating booking:", { ...data, totalAmount });
       toast.success("Booking created successfully!");
       form.reset();
       onOpenChange(false);
@@ -90,6 +119,32 @@ const NewBookingModal = ({ open, onOpenChange }: NewBookingModalProps) => {
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="guestId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Select Guest (Optional)</FormLabel>
+                  <Select onValueChange={handleGuestSelect} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select guest or enter manually" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="add_new">+ Add New Guest</SelectItem>
+                      {guests.map((guest) => (
+                        <SelectItem key={guest.id} value={guest.id}>
+                          {guest.name} - {guest.phone}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -138,7 +193,7 @@ const NewBookingModal = ({ open, onOpenChange }: NewBookingModalProps) => {
                     <SelectContent>
                       {availableStations.map((station) => (
                         <SelectItem key={station.id} value={station.id}>
-                          {station.name} - {formatCurrency(station.rate)}/hour ({station.status})
+                          {station.station_name} - {formatCurrency(station.hourly_rate)}/hour
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -215,11 +270,11 @@ const NewBookingModal = ({ open, onOpenChange }: NewBookingModalProps) => {
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
                     <span>Station:</span>
-                    <span>{selectedStation.name}</span>
+                    <span>{selectedStation.station_name}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Rate:</span>
-                    <span>{formatCurrency(selectedStation.rate)}/hour</span>
+                    <span>{formatCurrency(selectedStation.hourly_rate)}/hour</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Duration:</span>
@@ -244,6 +299,11 @@ const NewBookingModal = ({ open, onOpenChange }: NewBookingModalProps) => {
           </form>
         </Form>
       </DialogContent>
+      
+      <AddGuestModal
+        open={showAddGuestModal}
+        onOpenChange={setShowAddGuestModal}
+      />
     </Dialog>
   );
 };
