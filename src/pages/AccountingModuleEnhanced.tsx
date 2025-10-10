@@ -13,6 +13,7 @@ import {
 } from "@/hooks/useAccounting";
 import { AddAccountEntryModal } from "@/components/accounting/AddAccountEntryModal";
 import { ExportDataModal } from "@/components/accounting/ExportDataModal";
+import { SalesReportTab } from "@/components/accounting/SalesReportTab";
 import {
   DollarSign,
   TrendingUp,
@@ -106,8 +107,9 @@ const AccountingModule = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="sales">Sales Report</TabsTrigger>
           <TabsTrigger value="entries">Journal Entries</TabsTrigger>
           <TabsTrigger value="budgets">Budget Management</TabsTrigger>
           <TabsTrigger value="reports">Financial Reports</TabsTrigger>
@@ -229,6 +231,10 @@ const AccountingModule = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="sales" className="space-y-4">
+          <SalesReportTab />
         </TabsContent>
 
         <TabsContent value="entries" className="space-y-4">

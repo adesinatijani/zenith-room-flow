@@ -420,26 +420,74 @@ export const useOrders = () => {
       const order = orders.find(o => o.id === orderId);
       if (!order) return;
 
-      // Categories that affect inventory (beverages and drinks)
-      const inventoryCategories = [
+      if (!order.order_items || order.order_items.length === 0) return;
+
+      // Only track beverages - filter by category
+      const beverageCategories = [
         'Soft Drinks', 'Alcoholic Beverages', 'Beer', 'Spirits', 
-        'Red Wine', 'White Wine', 'Rosé Wine', 'Sparkling Wine'
+        'Red Wine', 'White Wine', 'Rosé Wine', 'Sparkling Wine',
+        'Cocktails', 'Juice', 'Water', 'Energy Drinks', 'Hot Beverages'
       ];
 
-      const inventoryItems = order.order_items?.filter(item => 
-        inventoryCategories.includes(item.item_category)
-      );
+      // Get menu items to check beverages and recipes
+      const { data: menuItems, error: menuError } = await supabase
+        .from('menu_items')
+        .select('id, name, category, tracks_inventory, inventory_item_id, recipe_id')
+        .in('name', order.order_items.map(item => item.item_name));
 
-      if (inventoryItems && inventoryItems.length > 0) {
-        for (const item of inventoryItems) {
-          // Update inventory quantity using RPC function
-          const { error } = await supabase.rpc('update_inventory_quantity', {
-            item_name_param: item.item_name,
-            quantity_change: -item.quantity
+      if (menuError) {
+        console.error('Error fetching menu items:', menuError);
+        return;
+      }
+
+      // Process each order item
+      for (const orderItem of order.order_items) {
+        const menuItem = menuItems?.find(mi => mi.name === orderItem.item_name);
+        
+        if (!menuItem) continue;
+
+        // Handle beverages - direct inventory tracking
+        if (beverageCategories.includes(orderItem.item_category)) {
+          if (menuItem.tracks_inventory && menuItem.inventory_item_id) {
+            const { data: inventoryItem, error: fetchError } = await supabase
+              .from('inventory')
+              .select('current_quantity')
+              .eq('id', menuItem.inventory_item_id)
+              .single();
+
+            if (fetchError) {
+              console.error(`Error fetching inventory for ${orderItem.item_name}:`, fetchError);
+              continue;
+            }
+
+            const newQuantity = Math.max(0, inventoryItem.current_quantity - orderItem.quantity);
+
+            const { error: updateError } = await supabase
+              .from('inventory')
+              .update({ 
+                current_quantity: newQuantity,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', menuItem.inventory_item_id);
+
+            if (updateError) {
+              console.error(`Error updating inventory for ${orderItem.item_name}:`, updateError);
+            } else {
+              console.log(`✅ Deducted ${orderItem.quantity} of ${orderItem.item_name} (beverage) from inventory`);
+            }
+          }
+        } 
+        // Handle kitchen/food items - recipe-based deduction
+        else if (menuItem.recipe_id) {
+          const { error: recipeError } = await supabase.rpc('deduct_recipe_ingredients', {
+            menu_item_uuid: menuItem.id,
+            quantity_sold: orderItem.quantity
           });
 
-          if (error) {
-            console.error(`Error updating inventory for ${item.item_name}:`, error);
+          if (recipeError) {
+            console.error(`Error deducting recipe ingredients for ${orderItem.item_name}:`, recipeError);
+          } else {
+            console.log(`✅ Deducted recipe ingredients for ${orderItem.quantity}x ${orderItem.item_name} (food)`);
           }
         }
       }

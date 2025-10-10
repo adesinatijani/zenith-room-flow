@@ -27,6 +27,7 @@ import AddMenuItemModal from "@/components/menu/AddMenuItemModal";
 import MenuSettingsModal from "@/components/menu/MenuSettingsModal";
 import MenuTemplateModal from "@/components/menu/MenuTemplateModal";
 import MenuExportModal from "@/components/menu/MenuExportModal";
+import { LinkRecipeModal } from "@/components/menu/LinkRecipeModal";
 
 const MenuManagement = () => {
   const { menuItems, loading, addMenuItem, updateMenuItem, deleteMenuItem } = useMenuItemsDB();
@@ -39,6 +40,7 @@ const MenuManagement = () => {
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isLinkRecipeOpen, setIsLinkRecipeOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
 
   const handleImportData = async (importedItems: Partial<MenuItem>[]) => {
@@ -155,8 +157,27 @@ const MenuManagement = () => {
               <Badge variant={item.is_available ? "default" : "secondary"}>
                 {item.is_available ? "Available" : "Unavailable"}
               </Badge>
+              {!isDrink && item.recipe_id && (
+                <Badge variant="outline" className="bg-green-50">
+                  ✓ Recipe Linked
+                </Badge>
+              )}
             </div>
           </div>
+
+          {!isDrink && (
+            <Button 
+              onClick={() => {
+                setSelectedItem(item);
+                setIsLinkRecipeOpen(true);
+              }}
+              variant="outline"
+              size="sm"
+              className="w-full"
+            >
+              {item.recipe_id ? "Edit Recipe Link" : "Link to Recipe"}
+            </Button>
+          )}
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
@@ -414,6 +435,19 @@ const MenuManagement = () => {
         onClose={() => setIsExportDialogOpen(false)}
         menuItems={menuItems}
       />
+
+      {selectedItem && (
+        <LinkRecipeModal
+          isOpen={isLinkRecipeOpen}
+          onClose={() => {
+            setIsLinkRecipeOpen(false);
+            setSelectedItem(null);
+          }}
+          menuItemId={selectedItem.id}
+          menuItemName={selectedItem.name}
+          currentRecipeId={selectedItem.recipe_id}
+        />
+      )}
     </div>
   );
 };

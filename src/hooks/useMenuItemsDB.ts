@@ -15,6 +15,7 @@ export interface MenuItem {
   is_available: boolean;
   tracks_inventory?: boolean;
   inventory_item_id?: string;
+  recipe_id?: string;
   tax_rate?: number;
   allergens: string[];
   ingredients: string[];

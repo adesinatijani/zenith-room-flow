@@ -1684,6 +1684,7 @@ export type Database = {
           name: string
           preparation_time: number | null
           price: number
+          recipe_id: string | null
           tax_rate: number | null
           tracks_inventory: boolean | null
           updated_at: string
@@ -1704,6 +1705,7 @@ export type Database = {
           name: string
           preparation_time?: number | null
           price?: number
+          recipe_id?: string | null
           tax_rate?: number | null
           tracks_inventory?: boolean | null
           updated_at?: string
@@ -1724,6 +1726,7 @@ export type Database = {
           name?: string
           preparation_time?: number | null
           price?: number
+          recipe_id?: string | null
           tax_rate?: number | null
           tracks_inventory?: boolean | null
           updated_at?: string
@@ -1734,6 +1737,13 @@ export type Database = {
             columns: ["inventory_item_id"]
             isOneToOne: false
             referencedRelation: "inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_items_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
             referencedColumns: ["id"]
           },
         ]
@@ -2119,6 +2129,51 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      recipe_ingredients: {
+        Row: {
+          created_at: string
+          id: string
+          inventory_item_id: string | null
+          quantity_needed: number
+          recipe_id: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inventory_item_id?: string | null
+          quantity_needed: number
+          recipe_id?: string | null
+          unit: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inventory_item_id?: string | null
+          quantity_needed?: number
+          recipe_id?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_ingredients_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recipes: {
         Row: {
@@ -2914,6 +2969,10 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_recipe_cost: {
+        Args: { recipe_uuid: string }
+        Returns: number
+      }
       can_access_basic_employee_info: {
         Args: { emp_id: string }
         Returns: boolean
@@ -2952,6 +3011,10 @@ export type Database = {
       }
       can_view_employee_sensitive_data: {
         Args: { employee_uuid: string }
+        Returns: boolean
+      }
+      deduct_recipe_ingredients: {
+        Args: { menu_item_uuid: string; quantity_sold: number }
         Returns: boolean
       }
       get_accessible_profiles: {
