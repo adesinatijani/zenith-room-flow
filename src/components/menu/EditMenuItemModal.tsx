@@ -33,6 +33,7 @@ const EditMenuItemModal = ({ isOpen, onClose, item, onUpdate, categories, allerg
     name: "",
     price: 0,
     cost_price: 0,
+    tax_rate: 0,
     description: "",
     category: "Main Course",
     preparation_time: 15,
@@ -65,6 +66,7 @@ const EditMenuItemModal = ({ isOpen, onClose, item, onUpdate, categories, allerg
         name: item.name,
         price: item.price,
         cost_price: item.cost_price || 0,
+        tax_rate: item.tax_rate || 0,
         description: item.description || "",
         category: item.category,
         preparation_time: item.preparation_time,
@@ -132,7 +134,7 @@ const EditMenuItemModal = ({ isOpen, onClose, item, onUpdate, categories, allerg
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Selling Price ($)</Label>
                 <Input 
@@ -150,6 +152,16 @@ const EditMenuItemModal = ({ isOpen, onClose, item, onUpdate, categories, allerg
                   step="0.01" 
                   value={formData.cost_price}
                   onChange={(e) => setFormData({...formData, cost_price: parseFloat(e.target.value) || 0})}
+                  placeholder="0.00" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Tax Rate (%)</Label>
+                <Input 
+                  type="number" 
+                  step="0.01" 
+                  value={formData.tax_rate}
+                  onChange={(e) => setFormData({...formData, tax_rate: parseFloat(e.target.value) || 0})}
                   placeholder="0.00" 
                 />
               </div>

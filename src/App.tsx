@@ -42,6 +42,7 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import UserManagement from "./pages/UserManagement";
 import DocumentationPage from "./pages/DocumentationPage";
+import GuestGuide from "./pages/GuestGuide";
 import ContentManagement from "./pages/ContentManagement";
 
 const queryClient = new QueryClient();
@@ -242,6 +243,7 @@ const App = () => {
                   </ProtectedRoute>
                 } />
                 <Route path="/documentation" element={<DocumentationPage />} />
+                <Route path="/guest-guide" element={<GuestGuide />} />
                 
                 {/* Catch-all route */}
                 <Route path="*" element={<NotFound />} />

@@ -31,6 +31,7 @@ const AddMenuItemModal = ({ isOpen, onClose, onAdd, categories, allergens }: Add
     name: "",
     price: 0,
     cost_price: 0,
+    tax_rate: 0,
     description: "",
     category: categories[0] || "Main Course",
     preparation_time: 15,
@@ -67,6 +68,7 @@ const AddMenuItemModal = ({ isOpen, onClose, onAdd, categories, allergens }: Add
         name: "",
         price: 0,
         cost_price: 0,
+        tax_rate: 0,
         description: "",
         category: categories[0] || "Main Course",
         preparation_time: 15,
@@ -122,7 +124,7 @@ const AddMenuItemModal = ({ isOpen, onClose, onAdd, categories, allergens }: Add
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Selling Price ($)</Label>
                 <Input 
@@ -141,6 +143,16 @@ const AddMenuItemModal = ({ isOpen, onClose, onAdd, categories, allergens }: Add
                   placeholder="0.00"
                   value={formData.cost_price}
                   onChange={(e) => setFormData({...formData, cost_price: parseFloat(e.target.value) || 0})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Tax Rate (%)</Label>
+                <Input 
+                  type="number" 
+                  step="0.01" 
+                  placeholder="0.00"
+                  value={formData.tax_rate}
+                  onChange={(e) => setFormData({...formData, tax_rate: parseFloat(e.target.value) || 0})}
                 />
               </div>
             </div>

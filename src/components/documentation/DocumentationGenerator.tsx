@@ -97,15 +97,12 @@ export const DocumentationGenerator: React.FC<DocumentationProps> = ({ onClose }
 
       // Generate the actual document
       setGenerationStep("Generating final document...");
-      const buffer = await generator.generateDocumentation();
+      const blob = await generator.generateDocumentation();
       
       setProgress(100);
       setGenerationStep("Download ready!");
 
       // Create download
-      const blob = new Blob([buffer], { 
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
-      });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;

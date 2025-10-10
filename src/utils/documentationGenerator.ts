@@ -808,7 +808,7 @@ export class HotelManagementDocumentationGenerator {
     ];
   }
 
-  public async generateDocumentation(): Promise<ArrayBuffer> {
+  public async generateDocumentation(): Promise<Blob> {
     try {
       console.log('Starting documentation generation...');
       
@@ -838,13 +838,11 @@ export class HotelManagementDocumentationGenerator {
         ],
       });
 
-      console.log('Document created, converting to buffer...');
-      const buffer = await Packer.toBuffer(document);
+      console.log('Document created, converting to blob...');
+      const blob = await Packer.toBlob(document);
       console.log('Documentation generated successfully');
       
-      // Convert Buffer to ArrayBuffer
-      const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
-      return arrayBuffer as ArrayBuffer;
+      return blob;
     } catch (error) {
       console.error('Error in generateDocumentation:', error);
       throw error;
