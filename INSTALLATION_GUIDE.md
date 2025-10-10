@@ -1,6 +1,6 @@
 # Hotel Management System - Complete Installation Guide
 
-## Prerequisites
+## Prerequisite
 - A Supabase account (free or paid tier)
 - Access to Supabase SQL Editor
 - Basic understanding of PostgreSQL
