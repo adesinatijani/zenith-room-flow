@@ -4,17 +4,15 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -26,12 +24,13 @@ jobs:
         run: npm run build
 
       - name: Deploy to cPanel via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USERNAME }}
+          server: ftp.whihs.com.ng
+          username: deploy@whihs.com.ng
           password: ${{ secrets.FTP_PASSWORD }}
-          port: ${{ secrets.FTP_PORT }}
-          local-dir: ./dist/
-          server-dir: /home/qkfjefmc/app.whihs.com.ng/
+          port: 21
+          protocol: ftp
+          local-dir: dist/
+          server-dir: public_html/app.whihs.com.ng/
           dangerous-clean-slate: true
