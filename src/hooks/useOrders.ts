@@ -418,15 +418,24 @@ export const useOrders = () => {
   const updateInventoryForOrder = async (orderId: string) => {
     try {
       const order = orders.find(o => o.id === orderId);
-      if (!order) return;
+      if (!order) {
+        console.log('❌ Order not found:', orderId);
+        return;
+      }
 
-      if (!order.order_items || order.order_items.length === 0) return;
+      if (!order.order_items || order.order_items.length === 0) {
+        console.log('❌ No order items to process');
+        return;
+      }
+
+      console.log('🔍 Processing inventory deduction for order:', orderId);
+      console.log('📦 Order items:', order.order_items.map(i => `${i.item_name} (x${i.quantity})`).join(', '));
 
       // Only track beverages - filter by category
       const beverageCategories = [
         'Soft Drinks', 'Alcoholic Beverages', 'Beer', 'Spirits', 
         'Red Wine', 'White Wine', 'Rosé Wine', 'Sparkling Wine',
-        'Cocktails', 'Juice', 'Water', 'Energy Drinks', 'Hot Beverages'
+        'Cocktails', 'Juice', 'Water', 'Energy Drinks', 'Hot Beverages', 'Beverages'
       ];
 
       // Get menu items to check beverages and recipes
@@ -436,63 +445,108 @@ export const useOrders = () => {
         .in('name', order.order_items.map(item => item.item_name));
 
       if (menuError) {
-        console.error('Error fetching menu items:', menuError);
+        console.error('❌ Error fetching menu items:', menuError);
         return;
       }
+
+      console.log('📋 Found menu items:', menuItems?.map(m => ({
+        name: m.name,
+        category: m.category,
+        hasInventoryLink: !!m.inventory_item_id,
+        hasRecipe: !!m.recipe_id
+      })));
 
       // Process each order item
       for (const orderItem of order.order_items) {
         const menuItem = menuItems?.find(mi => mi.name === orderItem.item_name);
         
-        if (!menuItem) continue;
+        if (!menuItem) {
+          console.log(`⚠️ Menu item not found: ${orderItem.item_name}`);
+          continue;
+        }
+
+        console.log(`\n🔄 Processing: ${orderItem.item_name} (${orderItem.item_category})`);
 
         // Handle beverages - direct inventory tracking
         if (beverageCategories.includes(orderItem.item_category)) {
-          if (menuItem.tracks_inventory && menuItem.inventory_item_id) {
-            const { data: inventoryItem, error: fetchError } = await supabase
-              .from('inventory')
-              .select('current_quantity')
-              .eq('id', menuItem.inventory_item_id)
-              .single();
+          console.log(`  → Beverage category detected`);
+          
+          if (!menuItem.tracks_inventory) {
+            console.log(`  ⚠️ tracks_inventory is false - skipping`);
+            continue;
+          }
+          
+          if (!menuItem.inventory_item_id) {
+            console.log(`  ❌ No inventory_item_id linked! Please edit "${orderItem.item_name}" and link it to an inventory item.`);
+            toast({
+              title: "Inventory Not Linked",
+              description: `"${orderItem.item_name}" needs to be linked to inventory. Go to Menu Management → Edit Item.`,
+              variant: "destructive",
+            });
+            continue;
+          }
 
-            if (fetchError) {
-              console.error(`Error fetching inventory for ${orderItem.item_name}:`, fetchError);
-              continue;
-            }
+          const { data: inventoryItem, error: fetchError } = await supabase
+            .from('inventory')
+            .select('current_quantity, item_name')
+            .eq('id', menuItem.inventory_item_id)
+            .single();
 
-            const newQuantity = Math.max(0, inventoryItem.current_quantity - orderItem.quantity);
+          if (fetchError) {
+            console.error(`  ❌ Error fetching inventory:`, fetchError);
+            continue;
+          }
 
-            const { error: updateError } = await supabase
-              .from('inventory')
-              .update({ 
-                current_quantity: newQuantity,
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', menuItem.inventory_item_id);
+          console.log(`  📦 Current inventory: ${inventoryItem.current_quantity}`);
+          const newQuantity = Math.max(0, inventoryItem.current_quantity - orderItem.quantity);
+          console.log(`  📦 New inventory: ${newQuantity} (deducted ${orderItem.quantity})`);
 
-            if (updateError) {
-              console.error(`Error updating inventory for ${orderItem.item_name}:`, updateError);
-            } else {
-              console.log(`✅ Deducted ${orderItem.quantity} of ${orderItem.item_name} (beverage) from inventory`);
-            }
+          const { error: updateError } = await supabase
+            .from('inventory')
+            .update({ 
+              current_quantity: newQuantity,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', menuItem.inventory_item_id);
+
+          if (updateError) {
+            console.error(`  ❌ Error updating inventory:`, updateError);
+          } else {
+            console.log(`  ✅ Successfully deducted ${orderItem.quantity} of ${orderItem.item_name} from inventory`);
           }
         } 
         // Handle kitchen/food items - recipe-based deduction
-        else if (menuItem.recipe_id) {
-          const { error: recipeError } = await supabase.rpc('deduct_recipe_ingredients', {
+        else {
+          console.log(`  → Food item detected`);
+          
+          if (!menuItem.recipe_id) {
+            console.log(`  ⚠️ No recipe linked! To track ingredients, go to Menu Management → Link Recipe.`);
+            continue;
+          }
+
+          console.log(`  → Calling deduct_recipe_ingredients...`);
+          const { data: deductionData, error: recipeError } = await supabase.rpc('deduct_recipe_ingredients', {
             menu_item_uuid: menuItem.id,
             quantity_sold: orderItem.quantity
           });
 
           if (recipeError) {
-            console.error(`Error deducting recipe ingredients for ${orderItem.item_name}:`, recipeError);
+            console.error(`  ❌ Error deducting recipe ingredients:`, recipeError);
+            toast({
+              title: "Recipe Deduction Failed",
+              description: `Could not deduct ingredients for "${orderItem.item_name}". ${recipeError.message}`,
+              variant: "destructive",
+            });
           } else {
-            console.log(`✅ Deducted recipe ingredients for ${orderItem.quantity}x ${orderItem.item_name} (food)`);
+            console.log(`  ✅ Successfully deducted ingredients for ${orderItem.quantity}x ${orderItem.item_name}`);
+            console.log(`  📊 Deduction result:`, deductionData);
           }
         }
       }
+      
+      console.log('✅ Inventory deduction complete\n');
     } catch (error) {
-      console.error('Error updating inventory:', error);
+      console.error('❌ Error updating inventory:', error);
       throw error;
     }
   };
