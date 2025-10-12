@@ -11,92 +11,83 @@ import {
   CheckCircle,
   AlertCircle,
   Settings,
-  FileEdit
+  FileEdit,
+  Trash2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { NetworkStatus } from "@/components/ui/network-status";
 import GlobalInventoryNotifications from "@/components/inventory/GlobalInventoryNotifications";
 import HotelSettingsEditor from "@/components/settings/HotelSettingsEditor";
 import { useRoomsDB } from "@/hooks/useRoomsDB";
 import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useDailyStats } from "@/hooks/useDailyStats";
+import { useClearSalesData } from "@/hooks/useClearSalesData";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { formatCurrency } = useGlobalSettings();
   const { rooms, bookings } = useRoomsDB();
+  const { data: dailyStats } = useDailyStats();
+  const clearSalesData = useClearSalesData();
 
-  // Fetch orders for restaurant revenue
-  const { data: orders } = useQuery({
-    queryKey: ['orders'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('status', 'paid');
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  // Calculate real stats
+  // Calculate real stats - DAILY ONLY (resets at midnight)
   const stats = useMemo(() => {
     const totalRooms = rooms?.length || 0;
     const occupiedRooms = rooms?.filter(r => r.status === 'occupied').length || 0;
     const activeBookings = bookings?.filter(b => b.booking_status === 'active').length || 0;
-
-    // Total revenue from bookings
-    const bookingRevenue = bookings
-      ?.filter(b => b.payment_status === 'paid')
-      .reduce((sum, b) => sum + Number(b.total_amount), 0) || 0;
-
-    // Total POS sales
-    const posSales = orders?.reduce((sum, o) => sum + Number(o.total_amount), 0) || 0;
-
-    const totalRevenue = bookingRevenue + posSales;
     const occupancyRate = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
 
     return [
       {
-        title: "Total Revenue",
-        value: formatCurrency(totalRevenue),
-        change: totalRevenue > 0 ? `${bookings?.length || 0} bookings` : "No sales yet",
+        title: "Today's Revenue",
+        value: formatCurrency(dailyStats?.totalRevenue || 0),
+        change: "Resets at midnight",
         icon: DollarSign,
         color: "text-green-600",
         bg: "bg-green-100"
       },
       {
-        title: "Active Bookings",
-        value: activeBookings.toString(),
-        change: `${bookings?.length || 0} total bookings`,
+        title: "Today's Bookings",
+        value: (dailyStats?.bookingCount || 0).toString(),
+        change: formatCurrency(dailyStats?.bookingRevenue || 0),
         icon: Calendar,
         color: "text-blue-600",
         bg: "bg-blue-100"
       },
       {
-        title: "Occupied Rooms",
-        value: `${occupiedRooms}/${totalRooms}`,
-        change: `${occupancyRate}% occupancy`,
-        icon: Hotel,
-        color: "text-purple-600",
-        bg: "bg-purple-100"
-      },
-      {
-        title: "POS Sales",
-        value: formatCurrency(posSales),
-        change: `${orders?.length || 0} orders`,
+        title: "Today's POS Sales",
+        value: formatCurrency(dailyStats?.ordersRevenue || 0),
+        change: `${dailyStats?.ordersCount || 0} orders`,
         icon: ShoppingCart,
         color: "text-orange-600",
         bg: "bg-orange-100"
+      },
+      {
+        title: "Today's Gym Revenue",
+        value: formatCurrency(dailyStats?.gymRevenue || 0),
+        change: `${dailyStats?.gymSessionsCount || 0} sessions`,
+        icon: Hotel,
+        color: "text-purple-600",
+        bg: "bg-purple-100"
       }
     ];
-  }, [rooms, bookings, orders, formatCurrency]);
+  }, [rooms, bookings, dailyStats, formatCurrency]);
 
   // Get recent bookings from database
   const recentBookings = useMemo(() => {
@@ -152,6 +143,39 @@ const AdminDashboard = () => {
         </div>
         <div className="flex items-center gap-3">
           <NetworkStatus showDetails />
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Clear All Sales
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete all sales data including:
+                  <ul className="list-disc list-inside mt-2 space-y-1">
+                    <li>All paid orders (restaurant/bar)</li>
+                    <li>All gym/game sessions</li>
+                    <li>All order items</li>
+                    <li>All accounting journal entries</li>
+                    <li>Room bookings will be marked as cancelled</li>
+                  </ul>
+                  <p className="mt-2 font-semibold text-destructive">This action cannot be undone!</p>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => clearSalesData.mutate()}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Yes, Clear All Data
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button variant="outline" onClick={() => navigate('/admin/content')}>
             <FileEdit className="h-4 w-4 mr-2" />
             Edit Content

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import { 
   useAccountEntries, 
   useFinancialSummary, 
@@ -29,6 +30,7 @@ import {
 
 const AccountingModule = () => {
   const { toast } = useToast();
+  const { formatCurrency } = useGlobalSettings();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -136,7 +138,7 @@ const AccountingModule = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-success">
-                  ${summary?.revenue.toLocaleString() || '0'}
+                  {formatCurrency(summary?.revenue || 0)}
                 </div>
                 <p className={`text-xs flex items-center gap-1 ${revenueChange >= 0 ? 'text-success' : 'text-destructive'}`}>
                   {revenueChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
@@ -154,7 +156,7 @@ const AccountingModule = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-destructive">
-                  ${summary?.expenses.toLocaleString() || '0'}
+                  {formatCurrency(summary?.expenses || 0)}
                 </div>
                 <p className={`text-xs flex items-center gap-1 ${expenseChange <= 0 ? 'text-success' : 'text-destructive'}`}>
                   {expenseChange <= 0 ? <TrendingDown className="h-3 w-3" /> : <TrendingUp className="h-3 w-3" />}
@@ -172,7 +174,7 @@ const AccountingModule = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-accent">
-                  ${summary?.netIncome.toLocaleString() || '0'}
+                  {formatCurrency(summary?.netIncome || 0)}
                 </div>
                 <p className={`text-xs flex items-center gap-1 ${netIncomeChange >= 0 ? 'text-success' : 'text-destructive'}`}>
                   {netIncomeChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
@@ -189,15 +191,15 @@ const AccountingModule = () => {
                 <CardTitle>Assets</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${summary?.assets.toLocaleString() || '0'}</div>
+                <div className="text-2xl font-bold">{formatCurrency(summary?.assets || 0)}</div>
                 <div className="space-y-2 mt-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Current Assets</span>
-                    <span>${Math.round((summary?.assets || 0) * 0.4).toLocaleString()}</span>
+                    <span>{formatCurrency(Math.round((summary?.assets || 0) * 0.4))}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Fixed Assets</span>
-                    <span>${Math.round((summary?.assets || 0) * 0.6).toLocaleString()}</span>
+                    <span>{formatCurrency(Math.round((summary?.assets || 0) * 0.6))}</span>
                   </div>
                 </div>
               </CardContent>
@@ -208,15 +210,15 @@ const AccountingModule = () => {
                 <CardTitle>Liabilities</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${summary?.liabilities.toLocaleString() || '0'}</div>
+                <div className="text-2xl font-bold">{formatCurrency(summary?.liabilities || 0)}</div>
                 <div className="space-y-2 mt-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Current Liabilities</span>
-                    <span>${Math.round((summary?.liabilities || 0) * 0.4).toLocaleString()}</span>
+                    <span>{formatCurrency(Math.round((summary?.liabilities || 0) * 0.4))}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Long-term Debt</span>
-                    <span>${Math.round((summary?.liabilities || 0) * 0.6).toLocaleString()}</span>
+                    <span>{formatCurrency(Math.round((summary?.liabilities || 0) * 0.6))}</span>
                   </div>
                 </div>
               </CardContent>
@@ -227,15 +229,15 @@ const AccountingModule = () => {
                 <CardTitle>Equity</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${summary?.equity.toLocaleString() || '0'}</div>
+                <div className="text-2xl font-bold">{formatCurrency(summary?.equity || 0)}</div>
                 <div className="space-y-2 mt-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Retained Earnings</span>
-                    <span>${Math.round((summary?.equity || 0) * 0.8).toLocaleString()}</span>
+                    <span>{formatCurrency(Math.round((summary?.equity || 0) * 0.8))}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Capital</span>
-                    <span>${Math.round((summary?.equity || 0) * 0.2).toLocaleString()}</span>
+                    <span>{formatCurrency(Math.round((summary?.equity || 0) * 0.2))}</span>
                   </div>
                 </div>
               </CardContent>
@@ -287,7 +289,7 @@ const AccountingModule = () => {
                     </div>
                     <div className="text-right">
                       <div className={`text-2xl font-bold ${entry.amount >= 0 ? 'text-success' : 'text-destructive'}`}>
-                        {entry.amount >= 0 ? '+' : ''}${Math.abs(entry.amount).toLocaleString()}
+                        {entry.amount >= 0 ? '+' : ''}{formatCurrency(Math.abs(entry.amount))}
                       </div>
                       <div className="flex gap-2 mt-2">
                         <Badge className={getCategoryColor(entry.account_categories?.type || 'asset')}>
@@ -331,17 +333,17 @@ const AccountingModule = () => {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center pb-2 border-b">
                     <span className="font-semibold">Revenue</span>
-                    <span className="font-bold text-success">${summary?.revenue.toLocaleString() || '0'}</span>
+                    <span className="font-bold text-success">{formatCurrency(summary?.revenue || 0)}</span>
                   </div>
                   
                   <div className="flex justify-between items-center pb-2 border-b">
                     <span className="font-semibold">Expenses</span>
-                    <span className="font-bold text-destructive">${summary?.expenses.toLocaleString() || '0'}</span>
+                    <span className="font-bold text-destructive">{formatCurrency(summary?.expenses || 0)}</span>
                   </div>
                   
                   <div className="flex justify-between items-center pt-4 border-t border-accent">
                     <span className="font-bold text-lg">Net Income</span>
-                    <span className="font-bold text-xl text-accent">${summary?.netIncome.toLocaleString() || '0'}</span>
+                    <span className="font-bold text-xl text-accent">{formatCurrency(summary?.netIncome || 0)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -359,11 +361,11 @@ const AccountingModule = () => {
                 <div className="space-y-4">
                   <div className="flex justify-between">
                     <span>Current Period</span>
-                    <span className="font-bold">${summary?.revenue.toLocaleString() || '0'}</span>
+                    <span className="font-bold">{formatCurrency(summary?.revenue || 0)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Previous Period</span>
-                    <span>${previousPeriod.revenue.toLocaleString()}</span>
+                    <span>{formatCurrency(previousPeriod.revenue)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Growth Rate</span>
@@ -383,11 +385,11 @@ const AccountingModule = () => {
                 <div className="space-y-4">
                   <div className="flex justify-between">
                     <span>Current Period</span>
-                    <span className="font-bold">${summary?.expenses.toLocaleString() || '0'}</span>
+                    <span className="font-bold">{formatCurrency(summary?.expenses || 0)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Previous Period</span>
-                    <span>${previousPeriod.expenses.toLocaleString()}</span>
+                    <span>{formatCurrency(previousPeriod.expenses)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Change Rate</span>

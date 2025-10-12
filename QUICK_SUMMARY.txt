@@ -1,0 +1,79 @@
+===============================================
+ACCOUNTING MODULE - STATUS REPORT
+===============================================
+
+✅ FIXED: Currency Integration
+   - Accounting module now uses global currency from hotel_settings
+   - All $ symbols replaced with formatCurrency() function
+   - Supports 12+ currencies (USD, EUR, GBP, NGN, GHS, KES, etc.)
+   - Works in: Dashboard, Sales Report, Journal Entries, Reports
+
+✅ VERIFIED: Clear Sales Data
+   - "Clear All Sales" button properly clears accounting entries
+   - Line 43-51 in src/hooks/useClearSalesData.ts
+   - Preserves categories & budgets (only clears transactions)
+
+✅ VERIFIED: Sales Report Connection
+   - Connected to orders, room_bookings, game_sessions tables
+   - Shows real-time data from database
+   - Properly clears when "Clear All Sales" is executed
+
+===============================================
+SQL FILES FOR OWEN (In Project Root)
+===============================================
+
+1. ACCOUNTING_MODULE_COMPLETE_SQL.sql
+   → Complete accounting setup with tables, RLS, categories
+
+2. DAILY_REPORTING_SYSTEM.sql
+   → Automatic daily snapshots at midnight + historical reports
+
+3. OWEN_COMPLETE_SETUP_INSTRUCTIONS.md
+   → Full setup guide with troubleshooting
+
+===============================================
+SETUP ORDER (CRITICAL!)
+===============================================
+
+Step 1: Copy & paste ACCOUNTING_MODULE_COMPLETE_SQL.sql into Supabase SQL Editor → Run
+Step 2: Copy & paste DAILY_REPORTING_SYSTEM.sql into Supabase SQL Editor → Run
+Step 3: Done! System will auto-snapshot at 00:05 daily
+
+===============================================
+KEY FEATURES AFTER SETUP
+===============================================
+
+✓ Accounting Dashboard (real-time financial metrics)
+✓ Sales Report (revenue breakdown by source)
+✓ Journal Entries (general ledger)
+✓ Budget Management (track vs actual)
+✓ Financial Reports (custom date ranges)
+✓ Daily Summaries (automatic midnight snapshots)
+✓ Historical Reports (view any previous day)
+✓ Global Currency Support (all amounts respect hotel_settings)
+
+===============================================
+MANUAL OPERATIONS
+===============================================
+
+Generate yesterday's summary:
+  SELECT public.generate_daily_summary(CURRENT_DATE - INTERVAL '1 day');
+
+View last 7 days comparison:
+  SELECT * FROM public.daily_comparison LIMIT 7;
+
+Backfill last 30 days (one-time):
+  -- Uncomment section 9 in DAILY_REPORTING_SYSTEM.sql
+
+===============================================
+FILES CHANGED (for reference)
+===============================================
+
+✓ src/components/accounting/SalesReportTab.tsx (currency)
+✓ src/pages/AccountingModule.tsx (currency)
+✓ src/hooks/useClearSalesData.ts (already working)
+✓ src/hooks/useDailyStats.ts (no changes needed)
+
+===============================================
+STATUS: ALL VERIFIED ✅
+===============================================

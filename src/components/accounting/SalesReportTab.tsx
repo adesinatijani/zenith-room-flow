@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useGlobalSettings } from "@/contexts/HotelSettingsContext";
 import { format } from "date-fns";
 import { 
   TrendingUp, 
@@ -48,6 +49,7 @@ interface RoomSale {
 
 export const SalesReportTab = () => {
   const { toast } = useToast();
+  const { formatCurrency } = useGlobalSettings();
   const [salesData, setSalesData] = useState<SaleItem[]>([]);
   const [roomSales, setRoomSales] = useState<RoomSale[]>([]);
   const [loading, setLoading] = useState(true);
@@ -250,10 +252,10 @@ export const SalesReportTab = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-success">
-              ${overallRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatCurrency(overallRevenue)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              POS: ${totalRevenue.toFixed(2)} | Rooms: ${totalRoomRevenue.toFixed(2)}
+              POS: {formatCurrency(totalRevenue)} | Rooms: {formatCurrency(totalRoomRevenue)}
             </p>
           </CardContent>
         </Card>
@@ -267,7 +269,7 @@ export const SalesReportTab = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-accent">
-              ${overallProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatCurrency(overallProfit)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Margin: {overallRevenue > 0 ? ((overallProfit / overallRevenue) * 100).toFixed(1) : 0}%
@@ -304,7 +306,7 @@ export const SalesReportTab = () => {
               {roomSales.length}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              ${totalRoomRevenue.toFixed(2)} revenue
+              {formatCurrency(totalRoomRevenue)} revenue
             </p>
           </CardContent>
         </Card>
@@ -401,20 +403,20 @@ export const SalesReportTab = () => {
                   <div className="grid grid-cols-4 gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground">Price</p>
-                      <p className="font-medium">${sale.price.toFixed(2)}</p>
+                      <p className="font-medium">{formatCurrency(sale.price)}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Revenue</p>
-                      <p className="font-medium text-success">${sale.total_revenue.toFixed(2)}</p>
+                      <p className="font-medium text-success">{formatCurrency(sale.total_revenue)}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Cost</p>
-                      <p className="font-medium text-destructive">${sale.total_cost.toFixed(2)}</p>
+                      <p className="font-medium text-destructive">{formatCurrency(sale.total_cost)}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Profit</p>
                       <p className="font-bold text-accent">
-                        ${sale.profit.toFixed(2)}
+                        {formatCurrency(sale.profit)}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {sale.profit_margin.toFixed(1)}% margin
@@ -458,7 +460,7 @@ export const SalesReportTab = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-success">
-                    ${room.total_amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {formatCurrency(room.total_amount)}
                   </p>
                   <Badge className="mt-1">{room.payment_status}</Badge>
                 </div>

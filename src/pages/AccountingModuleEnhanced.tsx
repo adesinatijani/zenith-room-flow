@@ -14,6 +14,7 @@ import {
 import { AddAccountEntryModal } from "@/components/accounting/AddAccountEntryModal";
 import { ExportDataModal } from "@/components/accounting/ExportDataModal";
 import { SalesReportTab } from "@/components/accounting/SalesReportTab";
+import { DateRangeReportModal } from "@/components/accounting/DateRangeReportModal";
 import {
   DollarSign,
   TrendingUp,
@@ -35,6 +36,7 @@ const AccountingModule = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isDateRangeModalOpen, setIsDateRangeModalOpen] = useState(false);
 
   const { data: entries = [], isLoading: entriesLoading } = useAccountEntries();
   const { data: summary, isLoading: summaryLoading } = useFinancialSummary();
@@ -95,6 +97,10 @@ const AccountingModule = () => {
           <p className="text-muted-foreground">Financial management and reporting</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsDateRangeModalOpen(true)}>
+            <Calendar className="h-4 w-4 mr-2" />
+            Generate Report
+          </Button>
           <Button variant="outline" onClick={() => setIsExportModalOpen(true)}>
             <Download className="h-4 w-4 mr-2" />
             Export Data
@@ -402,6 +408,11 @@ const AccountingModule = () => {
         entries={entries}
         summary={summary}
         budgets={budgets}
+      />
+
+      <DateRangeReportModal
+        isOpen={isDateRangeModalOpen}
+        onClose={() => setIsDateRangeModalOpen(false)}
       />
     </div>
   );
