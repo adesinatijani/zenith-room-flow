@@ -103,9 +103,7 @@ GRANT EXECUTE ON FUNCTION public.clear_sales_data(text) TO authenticated;
 -- Step 3: Reset all room statuses to available
 -- =====================================================
 UPDATE public.rooms 
-SET status = 'available', 
-    current_guest = NULL,
-    current_booking_id = NULL
+SET status = 'available'
 WHERE status != 'available';
 
 -- =====================================================
